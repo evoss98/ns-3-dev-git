@@ -108,10 +108,10 @@ main (int argc, char *argv[])
   int flowPerHost = 20;
   int illBehavedFlowNumber = 10;
   
-  std::string normalFlowInterval = "100ms"; // 10 packets/s
-  std::string illBehavedFlowInterval = "33ms"; // 30 packets/s
+  std::string normalFlowInterval = "50ms"; // 20 packets/s
+  std::string illBehavedFlowInterval = "16.7ms"; // 60 packets/s
 
-  int packetSize = 12500; // bytes = 100K. Try random between 0 and 4500 bits
+  int packetSize = 25; // bytes = 100 bits. Try random between 0 and 4500 bits
   int time = 2000; // run simulation for x seconds
 
   /* NS-3 is great when it comes to logging. It allows logging in different
@@ -170,7 +170,7 @@ main (int argc, char *argv[])
   hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
   PointToPointHelper bottleneckLink;
-  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("20Mbps"));
+  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("40Kbps"));
   bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
   bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
@@ -217,25 +217,31 @@ main (int argc, char *argv[])
 
   /* The receiver application */
   uint16_t receiverPort = 5001;
-  UdpServerHelper receiverHelper (receiverPort);
 
   // Install the receiver application on the correct host.
+  UdpServerHelper receiverHelper (receiverPort);
   ApplicationContainer receiverApp = receiverHelper.Install (h2);
   receiverApp.Start (Seconds (0.0));
   receiverApp.Stop (Seconds ((double)time));
 
 
   /* The sender Application */
-  UdpClientHelper sendHelper (s0h2_interfaces.GetAddress (1), receiverPort);
+  for (int i = 0; i < flowPerHost; i++) {
+    UdpClientHelper sendHelper (s0h2_interfaces.GetAddress (1), receiverPort);
 
-  sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
-  sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
-  sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
+    sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
+    if (i == illBehavedFlowNumber) {
+      sendHelper.SetAttribute ("Interval", StringValue (illBehavedFlowInterval));
+    } else {
+      sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
+    }
+    sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
-  // Install the source application on the correct host.
-  ApplicationContainer sourceApp = sendHelper.Install (h1);
-  sourceApp.Start (Seconds (0.0));
-  sourceApp.Stop (Seconds ((double)time));
+    // Install the source application on the correct host.
+    ApplicationContainer sourceApp = sendHelper.Install (h1);
+    sourceApp.Start (Seconds (0.0));
+    sourceApp.Stop (Seconds ((double)time));
+  }
 
   /* Start tracing the RTT after the connection is established */
   // Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceRtt, rttStream);
