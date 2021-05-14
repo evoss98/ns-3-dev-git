@@ -47,7 +47,7 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("DRRExample");
 
-// static double TRACE_START_TIME = 0.05;
+static double TRACE_START_TIME = 0.05;
 
 /* Tracing is one of the most valuable features of a simulation environment.
  * It means we can get to see evolution of any value / state we are interested
@@ -72,33 +72,31 @@ QueueOccupancyTracer (Ptr<OutputStreamWrapper> stream,
                         << newval << std::endl;
 }
 
-// static void
-// RttTracer (Ptr<OutputStreamWrapper> stream,
-//            Time oldval, Time newval)
-// {
-//   NS_LOG_INFO (Simulator::Now ().GetSeconds () <<
-//                " Rtt from " << oldval.GetMilliSeconds () <<
-//                " to " << newval.GetMilliSeconds ());
+static void
+UdpReceiverTracer (Ptr<OutputStreamWrapper> stream,
+                   const Ptr< const Packet > packet,
+                   const Address &srcAddress,
+                   const Address &destAddress)
+{
+  InetSocketAddress socketAdd = InetSocketAddress::ConvertFrom (srcAddress);
 
-//   *stream->GetStream () << Simulator::Now ().GetSeconds () << " "
-//                         << newval.GetMilliSeconds () << std::endl;
-// }
+  *stream->GetStream () << Simulator::Now ().GetSeconds () << " received packet from: "
+                        << socketAdd.GetPort () << std::endl;
+}
 
-// static void
-// TraceRtt (Ptr<OutputStreamWrapper> rttStream)
-// {
-//   // Use the correct TraceSource in order to trace
-//   // the round trip time (delay) experienced by the flow.
-//   //
-//   // HINT: TCP Socket is implemented on multiple classes in NS3. The trace
-//   //       source you are looking for might be in any of them.
-//   /* Note how the path is constructed for configuring the TraceSource. NS-3
-//    * keeps a hierarchical list of all available modules created for the
-//    *simulation
-//    */
-//   Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/RTT",
-//                                  MakeBoundCallback (&RttTracer, rttStream));
-// }
+static void
+TraceUDPPacketReceived (Ptr<OutputStreamWrapper> udpReceivedStream)
+{
+  // Use the correct TraceSource in order to trace
+  // the packet received by the UDP server.
+  //
+  /* Note how the path is constructed for configuring the TraceSource. NS-3
+   * keeps a hierarchical list of all available modules created for the
+   * simulation
+   */
+  Config::ConnectWithoutContext ("/NodeList/2/ApplicationList/0/$ns3::UdpServer/RxWithAddresses",
+                                 MakeBoundCallback (&UdpReceiverTracer, udpReceivedStream));
+}
 
 int
 main (int argc, char *argv[])
@@ -133,9 +131,9 @@ main (int argc, char *argv[])
   Ptr<OutputStreamWrapper> qStream;
   qStream = asciiTraceHelper.CreateFileStream (qStreamName);
 
-  std::string rttStreamName = dir + "rtt.tr";
-  Ptr<OutputStreamWrapper> rttStream;
-  rttStream = asciiTraceHelper.CreateFileStream (rttStreamName);
+  std::string udpReceiverStreamName = dir + "receivedPacket.tr";
+  Ptr<OutputStreamWrapper> udpReceiverStream;
+  udpReceiverStream = asciiTraceHelper.CreateFileStream (udpReceiverStreamName);
 
   /* In order to run simulations in NS-3, you need to set up your network all
    * the way from the physical layer to the application layer. But don't worry!
@@ -244,7 +242,7 @@ main (int argc, char *argv[])
   }
 
   /* Start tracing the RTT after the connection is established */
-  // Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceRtt, rttStream);
+  Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceUDPPacketReceived, udpReceiverStream);
 
   /******** Run the Actual Simulation ********/
   NS_LOG_DEBUG("Running the Simulation...");
