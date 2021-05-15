@@ -137,17 +137,103 @@ namespace ns3 {
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
-        //extract flow (i = extractFlow(item)). If flow is not in the active list, insert it, set deficiet counter to 0.
-        //if there are no free buffers, then FreeBuffer() (using buffer stealing?)
-        //Else, encueue packet p to queue i
+
+        NS_LOG_FUNCTION (this << item);
+
+        //Extract flow from item
+        int32_t ret = Classify (item);
+        uint32_t index;
+
+        if (ret != PacketFilter::PF_NO_MATCH)
+        {
+            index = ret % m_flows;
+        }
+        else
+        {
+          NS_LOG_ERROR ("No filter has been able to classify this packet, drop it.");
+          //DropBeforeEnqueue (item, UNCLASSIFIED_DROP);
+          //return false;
+
+          //What should we do here? Either drop or create a seperate flow. Could use
+          //index = max number output queues (m_flows)
+
+        }
+
+        //check if index is in m_flowIndicies. If not, add to m_flowIndicies and create flow.
+        //following code adapted from FqCoDel code
+        Ptr<DrrFlow> flow;
+        if (m_flowsIndices.find (index) == m_flowsIndices.end ())
+        {
+            NS_LOG_DEBUG ("Creating a new flow queue with index " << index);
+            flow = m_flowFactory.Create<DrrFlow> ();
+            Ptr<QueueDisc> qd = m_queueDiscFactory.Create<QueueDisc> ();
+            qd->Initialize ();
+            flow->SetQueueDisc (qd);
+            AddQueueDiscClass (flow);
+
+            m_flowsIndices[index] = GetNQueueDiscClasses () - 1;
+        }
+        else
+        {
+            flow = StaticCast<DrrFlow> (GetQueueDiscClass (m_flowsIndices[index]));
+        }
+
+        if (flow->GetStatus () == DrrFlow::INACTIVE)
+        {
+            flow->SetStatus (DrrFlow::ACTIVE);
+            flow->SetDeficit (m_quantum);
+            m_activeList.push_back (flow);
+        }
+
+        //enqueue the flow
+        flow->GetQueueDisc ()->Enqueue (item);
+
+        //check if we need to drop packets.
+        //FreeBuffer() using buffer stealing?? Currently have a DrrDrop that drops one packet
+
+
     }
 
     Ptr<QueueDiscItem>
     DrrQueueDisc::DoDequeue (void)
     {
         //follow pseudocode from figure 4 of paper
+        NS_LOG_FUNCTION (this);
+
+        Ptr<FqCoDelFlow> flow;
+        Ptr<QueueDiscItem> item;
+
+        //check if activelist is empty
+        if(m_activeList.empty())
+        {
+            NS_LOG_DEBUG("No active flows to dequeue, returning 0");
+            return 0;
+        }
+
+        do
+            {
+                if(!m_activeList.empty())
+                {
+                    //remove head of active list
+                    flow = m_activeList.front();
+                    m_activeList.pop_front();
+
+                    //increment deficit
+                    flow->IncreaseDeficit(m_quantum);
+
+                    while(flow->GetDeficit > 0 )
+                    {
+                        //having trouble understanding the pseudocode in figure 4
+                        //to implement the rest of Dequeue
+                    }
+                }
+            }
+        while (item == 0);
+
     }
 
+    
+    
     //check config addapted from FqCoDelQueue code
 
     bool
