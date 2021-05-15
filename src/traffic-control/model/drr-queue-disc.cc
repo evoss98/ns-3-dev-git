@@ -137,13 +137,15 @@ namespace ns3 {
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
-        //code for enqueue
+        //extract flow (i = extractFlow(item)). If flow is not in the active list, insert it, set deficiet counter to 0.
+        //if there are no free buffers, then FreeBuffer() (using buffer stealing?)
+        //Else, encueue packet p to queue i
     }
 
     Ptr<QueueDiscItem>
     DrrQueueDisc::DoDequeue (void)
     {
-        //code for dequeue
+        //follow pseudocode from figure 4 of paper
     }
 
     //check config addapted from FqCoDelQueue code
