@@ -203,12 +203,12 @@ namespace ns3 {
         Ptr<FqCoDelFlow> flow;
         Ptr<QueueDiscItem> item;
 
-        //check if activelist is empty
-        if(m_activeList.empty())
-        {
-            NS_LOG_DEBUG("No active flows to dequeue, returning 0");
-            return 0;
-        }
+        //check if activelist is empty?
+        // if(m_activeList.empty())
+        // {
+        //     NS_LOG_DEBUG("No active flows to dequeue, returning 0");
+        //     return 0;
+        // }
 
         do
             {
@@ -225,10 +225,27 @@ namespace ns3 {
                     {
                         //having trouble understanding the pseudocode in figure 4
                         //to implement the rest of Dequeue
+
+                        //item = flow->GetQueueDisc ()->Dequeue ();
+                    }
+
+                    //if the queue is empty, set deficit to zero, status to inactive
+                    if(flow->GetQueueDisc()->GetNPackets() == 0)
+                    {
+                        flow->SetDeficit(0);
+                        flow->SetStatus(DrrFlow::INACTIVE);
+                        NS_LOG_DEBUG("Flow is empty, setting deficit to 0 and status to inactive");
+                    }
+                    else
+                    {
+                        //add flow to end of the active list
+                        m_activeList.push_back(flow);
+                        NS_LOG_DEBUG("Flow still has packets, inserting at end of active list");
                     }
                 }
             }
-        while (item == 0);
+        while (true);
+        //will this loop ever end??
 
     }
 
