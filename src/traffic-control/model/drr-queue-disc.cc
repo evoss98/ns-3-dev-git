@@ -102,7 +102,7 @@ namespace ns3 {
 
     //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (0)
+        : m_quantum (1)
     {
         NS_LOG_FUNCTION (this);
     }
@@ -125,6 +125,12 @@ namespace ns3 {
         return m_quantum;
     }
 
+    bool
+    DrrQueueDisc::CheckConfig (void)
+    {
+        return true;
+    }
+
     //Enqueue
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
@@ -133,7 +139,7 @@ namespace ns3 {
 
         // Extract flow from item
         uint32_t index = item->Hash ();
-        NS_LOG_DEBUG ("Hash output " << flowId << " for packet item " << item);
+        NS_LOG_DEBUG ("Hash output " << index << " for packet item " << item);
 
         //check if index is in m_flowIndicies. If not, add to m_flowIndicies and create flow.
         //following code adapted from FqCoDel code
@@ -166,6 +172,8 @@ namespace ns3 {
 
         //check if we need to drop packets.
         //FreeBuffer() using buffer stealing?? Currently have a DrrDrop that drops one packet
+
+        return true;
     }
 
     Ptr<QueueDiscItem>
@@ -187,10 +195,10 @@ namespace ns3 {
                 //increment deficit
                 flow->IncreaseDeficit(m_quantum);
 
-                while(flow->GetDeficit > 0 && flow->GetQueueDisc ()->getCurrentSize (). getValue() > 0)
+                while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetCurrentSize (). GetValue() > 0)
                 {
                     Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
-                    uint32_t headSize = head.GetSize ();
+                    uint32_t headSize = head->GetSize ();
                     if (headSize <= flow->GetDeficit ()) {
                         flow->DecreaseDeficit (headSize);
                         Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
@@ -215,7 +223,7 @@ namespace ns3 {
                 }
             } else {
                 NS_LOG_DEBUG("No active flows to dequeue, returning null");
-                return null;
+                return 0;
             }
         }
         while (true);
@@ -236,32 +244,36 @@ namespace ns3 {
     uint32_t
     DrrQueueDisc::DrrDrop (void)
     {
-        NS_LOG_FUNCTION (this);
+        // Commented out to pass compilation. Will revisit if needed
 
-        uint32_t maxBacklog = 0, index = 0;
-        Ptr<QueueDisc> qd;
+        // NS_LOG_FUNCTION (this);
 
-        /* Queue is full! Find the fat flow and drop packet(s) from it */
-        for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
-        {
-            qd = GetQueueDiscClass (i)->GetQueueDisc ();
-            uint32_t bytes = qd->GetNBytes ();
-            if (bytes > maxBacklog)
-            {
-                maxBacklog = bytes;
-                index = i;
-            }
-        }   
+        // uint32_t maxBacklog = 0, index = 0;
+        // Ptr<QueueDisc> qd;
+
+        // /* Queue is full! Find the fat flow and drop packet(s) from it */
+        // for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
+        // {
+        //     qd = GetQueueDiscClass (i)->GetQueueDisc ();
+        //     uint32_t bytes = qd->GetNBytes ();
+        //     if (bytes > maxBacklog)
+        //     {
+        //         maxBacklog = bytes;
+        //         index = i;
+        //     }
+        // }   
 
         //drop just one packet. FqCoDel does similar, but drops half of the packets.
         //is it correct to just drop one?
 
-        uint32_t len = 0, count = 0, threshold = maxBacklog >> 1;
-        qd = GetQueueDiscClass (index)->GetQueueDisc ();
-        Ptr<QueueDiscItem> item;
-        item = qd->GetInternalQueue (0)->Dequeue ();
-        DropAfterDequeue (item, OVERLIMIT_DROP);
-        return index;
+        // uint32_t len = 0, count = 0, threshold = maxBacklog >> 1;
+        // qd = GetQueueDiscClass (index)->GetQueueDisc ();
+        // Ptr<QueueDiscItem> item;
+        // item = qd->GetInternalQueue (0)->Dequeue ();
+        // DropAfterDequeue (item, OVERLIMIT_DROP);
+        // return index;
+
+        return 0;
     
     }
 

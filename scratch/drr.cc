@@ -194,7 +194,7 @@ main (int argc, char *argv[])
   TrafficControlHelper tchPfifo;
   tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
 
-  tchPfifo.Install (h1s0_NetDevices);
+  // tchPfifo.Install (h1s0_NetDevices);
   QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
   /* Trace Bottleneck Queue Occupancy */
   s0h2_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",

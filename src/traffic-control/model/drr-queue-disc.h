@@ -117,6 +117,7 @@ namespace ns3 {
         virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
         virtual Ptr<QueueDiscItem> DoDequeue (void);
         virtual void InitializeParams (void);
+        virtual bool CheckConfig (void);
 
         /**
         * \brief Drop a packet from the head of the queue with the largest current byte count
@@ -125,7 +126,7 @@ namespace ns3 {
         uint32_t DrrDrop (void);
 
         uint32_t m_quantum;        //!< Deficit assigned to flows at each round
-        uint32_t m_dropBatchSize;  //!< Max number of packets dropped from the fat flow
+        // uint32_t m_dropBatchSize;  //!< Max number of packets dropped from the fat flow
 
 
         std::list<Ptr<DrrFlow> > m_activeList;    //!< List of active flows
