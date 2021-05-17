@@ -28,7 +28,7 @@ namespace ns3 {
 
     //constuctor and deconstructor. Adapted from fq-codel-queue
     DrrFlow::DrrFlow ()
-        : m_deficit (0),
+        : m_deficit (100),
         m_status (INACTIVE)
     {
         NS_LOG_FUNCTION (this);
@@ -195,7 +195,7 @@ namespace ns3 {
                 //increment deficit
                 flow->IncreaseDeficit(m_quantum);
 
-                while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetCurrentSize (). GetValue() > 0)
+                while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetCurrentSize ().GetValue () > 0)
                 {
                     Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
                     uint32_t headSize = head->GetSize ();
