@@ -11,7 +11,7 @@ namespace ns3 {
     /**
     * \ingroup traffic-control
     *
-    * \brief A flow queue used by the FqCoDel queue disc
+    * \brief A flow queue used by the drr queue disc
     */
 
     class DrrFlow : public QueueDiscClass {
@@ -54,6 +54,11 @@ namespace ns3 {
         */
         void IncreaseDeficit (int32_t deficit);
         /**
+        * \brief Decrease the deficit for this flow
+        * \param deficit the amount by which the deficit is to be increased
+        */
+        void DecreaseDeficit (int32_t deficit);
+        /**
         * \brief Set the status for this flow
         * \param status the status for this flow
         */
@@ -76,8 +81,8 @@ namespace ns3 {
 
     private:
         int32_t m_deficit;    //!< the deficit for this flow
-    FlowStatus m_status;  //!< the status of this flow
-    uint32_t m_index;     //!< the index for this flow
+        FlowStatus m_status;  //!< the status of this flow
+        uint32_t m_index;     //!< the index for this flow
     };
 
 
@@ -115,6 +120,20 @@ namespace ns3 {
         */
         uint32_t GetQuantum (void) const;
 
+        /**
+        * \brief Set the number of flows value.
+        *
+        * \param flows The number of flows using this bottleneck link in this simulation
+        */
+        void SetFlows (uint32_t flows);
+
+        /**
+        * \brief Get the number of flows value.
+        *
+        * \returns The number of flows using this bottleneck link in the simulation
+        */
+        uint32_t GetFlows (void) const;
+
         // Reasons for dropping packets
         static constexpr const char* UNCLASSIFIED_DROP = "Unclassified drop";  //!< No packet filter able to classify packet
         static constexpr const char* OVERLIMIT_DROP = "Overlimit drop";        //!< Overlimit dropped packets
@@ -122,7 +141,6 @@ namespace ns3 {
     private:
         virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
         virtual Ptr<QueueDiscItem> DoDequeue (void);
-        virtual bool CheckConfig (void);
         virtual void InitializeParams (void);
 
         /**

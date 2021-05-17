@@ -16,7 +16,7 @@ namespace ns3 {
     NS_OBJECT_ENSURE_REGISTERED (DrrFlow);
 
     //define DrrFlow
-    TypeId FqCoDelFlow::GetTypeId (void)
+    TypeId DrrFlow::GetTypeId (void)
     {
         static TypeId tid = TypeId ("ns3::DrrFlow")
             .SetParent<QueueDiscClass> ()
@@ -60,6 +60,13 @@ namespace ns3 {
     {
         NS_LOG_FUNCTION (this << deficit);
         m_deficit += deficit;
+    }
+
+    void
+    DrrFlow::DecreaseDeficit (int32_t deficit)
+    {
+        NS_LOG_FUNCTION (this << deficit);
+        m_deficit -= deficit;
     }
 
     void
@@ -110,7 +117,8 @@ namespace ns3 {
 
     //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (0)
+        : m_quantum (0),
+          m_flows (0)
     {
         NS_LOG_FUNCTION (this);
     }
@@ -131,6 +139,19 @@ namespace ns3 {
     DrrQueueDisc::GetQuantum (void) const
     {
         return m_quantum;
+    }
+
+    void
+    DrrQueueDisc::SetFlows (uint32_t flows)
+    {
+        NS_LOG_FUNCTION (this << flows);
+        m_flows = flows;
+    }
+
+    uint32_t
+    DrrQueueDisc::GetFlows (void) const
+    {
+        return m_flows;
     }
 
     //Enqueue
@@ -200,78 +221,52 @@ namespace ns3 {
         //follow pseudocode from figure 4 of paper
         NS_LOG_FUNCTION (this);
 
-        Ptr<FqCoDelFlow> flow;
+        Ptr<DrrFlow> flow;
         Ptr<QueueDiscItem> item;
 
-        //check if activelist is empty?
-        // if(m_activeList.empty())
-        // {
-        //     NS_LOG_DEBUG("No active flows to dequeue, returning 0");
-        //     return 0;
-        // }
-
-        do
+        do {
+            if(!m_activeList.empty())
             {
-                if(!m_activeList.empty())
+                //remove head of active list
+                flow = m_activeList.front();
+                m_activeList.pop_front();
+
+                //increment deficit
+                flow->IncreaseDeficit(m_quantum);
+
+                while(flow->GetDeficit > 0 && flow->GetQueueDisc ()->getCurrentSize (). getValue() > 0)
                 {
-                    //remove head of active list
-                    flow = m_activeList.front();
-                    m_activeList.pop_front();
-
-                    //increment deficit
-                    flow->IncreaseDeficit(m_quantum);
-
-                    while(flow->GetDeficit > 0 )
-                    {
-                        //having trouble understanding the pseudocode in figure 4
-                        //to implement the rest of Dequeue
-
-                        //item = flow->GetQueueDisc ()->Dequeue ();
-                    }
-
-                    //if the queue is empty, set deficit to zero, status to inactive
-                    if(flow->GetQueueDisc()->GetNPackets() == 0)
-                    {
-                        flow->SetDeficit(0);
-                        flow->SetStatus(DrrFlow::INACTIVE);
-                        NS_LOG_DEBUG("Flow is empty, setting deficit to 0 and status to inactive");
-                    }
-                    else
-                    {
-                        //add flow to end of the active list
-                        m_activeList.push_back(flow);
-                        NS_LOG_DEBUG("Flow still has packets, inserting at end of active list");
+                    Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
+                    uint32_t headSize = head.GetSize ();
+                    if (headSize <= flow->GetDeficit ()) {
+                        flow->DecreaseDeficit (headSize);
+                        Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
+                        return item;
+                    } else {
+                        break;
                     }
                 }
+
+                //if the queue is empty, set deficit to zero, status to inactive
+                if(flow->GetQueueDisc()->GetNPackets() == 0)
+                {
+                    flow->SetDeficit(0);
+                    flow->SetStatus(DrrFlow::INACTIVE);
+                    NS_LOG_DEBUG("Flow is empty, setting deficit to 0 and status to inactive");
+                }
+                else
+                {
+                    //add flow to end of the active list
+                    m_activeList.push_back(flow);
+                    NS_LOG_DEBUG("Flow still has packets, inserting at end of active list");
+                }
+            } else {
+                NS_LOG_DEBUG("No active flows to dequeue, returning null");
+                return null;
             }
+        }
         while (true);
-        //will this loop ever end??
 
-    }
-
-    
-    
-    //check config addapted from FqCoDelQueue code
-
-    bool
-    FqCoDelQueueDisc::CheckConfig (void)
-    {
-        NS_LOG_FUNCTION (this);
-        if (GetNQueueDiscClasses () > 0)
-        {
-            NS_LOG_ERROR ("FqCoDelQueueDisc cannot have classes");
-        return false;
-        }
-
-        if (GetNInternalQueues () > 0)
-        {
-            NS_LOG_ERROR ("FqCoDelQueueDisc cannot have internal queues");
-            return false;
-        }
-    
-        //more checks in FqCoDel, not sure if they are needed?
-        
-        return true;
     }
 
     void
@@ -281,7 +276,7 @@ namespace ns3 {
 
         m_flowFactory.SetTypeId ("ns3::DrrFlow");
 
-        //from FqCoDelCode
+        // is there a simpler base queue disc we can use here?
         m_queueDiscFactory.SetTypeId ("ns3::CoDelQueueDisc");
     }
 
