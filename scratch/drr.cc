@@ -26,7 +26,8 @@
  *    hN-----------------s0
  *
  *  Usage (e.g.):
- *    ./waf --run 'drr'
+ *    sudo ./waf --run 'drr'
+ *    sudo NS_LOG="DrrQueueDisc" ./waf --run scratch/drr.cc
  */
 
 #include <stdlib.h>

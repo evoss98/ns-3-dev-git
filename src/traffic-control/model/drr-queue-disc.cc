@@ -1,14 +1,13 @@
 
 //implementation of drr queue for NS-3
 //Ang Li and Erin Voss
-//much of the code is adopted from the fq-codel-queue-disc that
+//parts of the code are adopted from the fq-codel-queue-disc that
 //is already implemented in NS3
 
 #include "ns3/log.h"
 #include "ns3/string.h"
 #include "ns3/queue.h"
 #include "drr-queue-disc.h"
-#include "codel-queue-disc.h"
 #include "ns3/net-device-queue-interface.h"
 
 namespace ns3 {
@@ -37,7 +36,7 @@ namespace ns3 {
     {
     } 
 
-    //SetDeficit, GetDeficit, IncreaseDeficit, SetStatus, FlowStatus, GetIndex, SetIndex taken from fq-codel-queue
+    //SetDeficit, GetDeficit, IncreaseDeficit, SetStatus, FlowStatus taken from fq-codel-queue
     void
     DrrFlow::SetDeficit (uint32_t deficit)
     {
@@ -85,7 +84,7 @@ namespace ns3 {
             .SetParent<QueueDisc> ()
             .SetGroupName ("TrafficControl")
             .AddConstructor<DrrQueueDisc> ()
-            // add other attributes?
+            // TODO: add quantum as an attribute
             // .AddAttribute ("UseEcn",
             //        "True to use ECN (packets are marked instead of being dropped)",
             //        BooleanValue (true),
@@ -95,7 +94,7 @@ namespace ns3 {
         return tid;
     }
 
-    //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
+    //DrrQueueDisc constructor/destructor, SetQuantum, GetQuantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
         : m_quantum (53)
     {
@@ -124,11 +123,10 @@ namespace ns3 {
         return true;
     }
 
-    //Enqueue
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
-        // Extract flow from item
+        // Hash the IP 5-tuple to as identifier for the flow
         uint32_t index = item->Hash ();
         NS_LOG_DEBUG ("Hash output " << index << " for packet item " << item);
 
@@ -190,13 +188,16 @@ namespace ns3 {
                     Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
                     uint32_t headSize = head->GetSize ();
                     NS_LOG_DEBUG("Head packet size " << headSize << " with deficit " << flow->GetDeficit ());
-                    if (headSize <= flow->GetDeficit ()) {
+                    if (headSize <= flow->GetDeficit ())
+                    {
                         flow->DecreaseDeficit (headSize);
                         Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
                         //add flow to end of the active list
                         m_activeList.push_back(flow);
                         return item;
-                    } else {
+                    } 
+                    else
+                    {
                         break;
                     }
                 }
@@ -212,13 +213,14 @@ namespace ns3 {
                     //add flow to end of the active list
                     m_activeList.push_back(flow);
                 }
-            } else {
+            }
+            else
+            {
                 NS_LOG_DEBUG("No active flows to dequeue, returning null");
                 return 0;
             }
         }
         while (true);
-
     }
 
     void
