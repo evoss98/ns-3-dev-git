@@ -68,21 +68,10 @@ namespace ns3 {
         * \return the status of this flow
         */
         FlowStatus GetStatus (void) const;
-        /**
-        * \brief Set the index for this flow
-        * \param index the index for this flow
-        */
-        void SetIndex (uint32_t index);
-        /**
-        * \brief Get the index of this flow
-        * \return the index of this flow
-        */
-        uint32_t GetIndex (void) const;
 
     private:
         int32_t m_deficit;    //!< the deficit for this flow
         FlowStatus m_status;  //!< the status of this flow
-        uint32_t m_index;     //!< the index for this flow
     };
 
 
@@ -120,20 +109,6 @@ namespace ns3 {
         */
         uint32_t GetQuantum (void) const;
 
-        /**
-        * \brief Set the number of flows value.
-        *
-        * \param flows The number of flows using this bottleneck link in this simulation
-        */
-        void SetFlows (uint32_t flows);
-
-        /**
-        * \brief Get the number of flows value.
-        *
-        * \returns The number of flows using this bottleneck link in the simulation
-        */
-        uint32_t GetFlows (void) const;
-
         // Reasons for dropping packets
         static constexpr const char* UNCLASSIFIED_DROP = "Unclassified drop";  //!< No packet filter able to classify packet
         static constexpr const char* OVERLIMIT_DROP = "Overlimit drop";        //!< Overlimit dropped packets
@@ -150,7 +125,6 @@ namespace ns3 {
         uint32_t DrrDrop (void);
 
         uint32_t m_quantum;        //!< Deficit assigned to flows at each round
-        uint32_t m_flows;          //!< Number of flow queues
         uint32_t m_dropBatchSize;  //!< Max number of packets dropped from the fat flow
 
 

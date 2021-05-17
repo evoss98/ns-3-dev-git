@@ -29,8 +29,7 @@ namespace ns3 {
     //constuctor and deconstructor. Adapted from fq-codel-queue
     DrrFlow::DrrFlow ()
         : m_deficit (0),
-        m_status (INACTIVE),
-        m_index (0)
+        m_status (INACTIVE)
     {
         NS_LOG_FUNCTION (this);
     }
@@ -83,20 +82,6 @@ namespace ns3 {
         return m_status;
     }
 
-    //might not need index for DRR?
-    void
-    DrrFlow::SetIndex (uint32_t index)
-    {
-        NS_LOG_FUNCTION (this);
-        m_index = index;
-    }
-
-    uint32_t
-    DrrFlow::GetIndex (void) const
-    {
-        return m_index;
-    }
-
     NS_OBJECT_ENSURE_REGISTERED (DrrQueueDisc);
 
     TypeId DrrQueueDisc::GetTypeId (void)
@@ -105,7 +90,7 @@ namespace ns3 {
             .SetParent<QueueDisc> ()
             .SetGroupName ("TrafficControl")
             .AddConstructor<DrrQueueDisc> ()
-            //add other attributes?
+            // add other attributes?
             // .AddAttribute ("UseEcn",
             //        "True to use ECN (packets are marked instead of being dropped)",
             //        BooleanValue (true),
@@ -117,8 +102,7 @@ namespace ns3 {
 
     //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (0),
-          m_flows (0)
+        : m_quantum (0)
     {
         NS_LOG_FUNCTION (this);
     }
@@ -141,19 +125,6 @@ namespace ns3 {
         return m_quantum;
     }
 
-    void
-    DrrQueueDisc::SetFlows (uint32_t flows)
-    {
-        NS_LOG_FUNCTION (this << flows);
-        m_flows = flows;
-    }
-
-    uint32_t
-    DrrQueueDisc::GetFlows (void) const
-    {
-        return m_flows;
-    }
-
     //Enqueue
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
@@ -161,24 +132,8 @@ namespace ns3 {
         NS_LOG_FUNCTION (this << item);
 
         // Extract flow from item
-        int32_t ret = Classify (item);
-        NS_LOG_DEBUG ("Classify output " << ret << " for packet item " << item);
-
-        uint32_t index;
-
-        if (ret != PacketFilter::PF_NO_MATCH)
-        {
-            index = ret % m_flows;
-        }
-        else
-        {
-          NS_LOG_ERROR ("No filter has been able to classify this packet, drop it.");
-          return false;
-
-          //DropBeforeEnqueue (item, UNCLASSIFIED_DROP);
-          //What should we do here? Either drop or create a seperate flow. Could use
-          //index = max number output queues (m_flows)
-        }
+        uint32_t index = item->Hash ();
+        NS_LOG_DEBUG ("Hash output " << flowId << " for packet item " << item);
 
         //check if index is in m_flowIndicies. If not, add to m_flowIndicies and create flow.
         //following code adapted from FqCoDel code
@@ -211,8 +166,6 @@ namespace ns3 {
 
         //check if we need to drop packets.
         //FreeBuffer() using buffer stealing?? Currently have a DrrDrop that drops one packet
-
-
     }
 
     Ptr<QueueDiscItem>

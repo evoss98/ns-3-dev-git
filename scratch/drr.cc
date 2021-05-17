@@ -42,6 +42,7 @@
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/traffic-control-module.h"
 #include "ns3/udp-client-server-helper.h"
+#include "ns3/drr-queue-disc.h"
 
 using namespace ns3;
 
@@ -191,8 +192,7 @@ main (int argc, char *argv[])
 
   // use the correct attribute name to set the size of the bottleneck queue.
   TrafficControlHelper tchPfifo;
-  tchPfifo.SetRootQueueDisc ("ns3::PfifoFastQueueDisc",
-                             "MaxSize", StringValue("100p"));
+  tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
 
   tchPfifo.Install (h1s0_NetDevices);
   QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
