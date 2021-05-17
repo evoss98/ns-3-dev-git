@@ -28,15 +28,13 @@ namespace ns3 {
 
     //constuctor and deconstructor. Adapted from fq-codel-queue
     DrrFlow::DrrFlow ()
-        : m_deficit (100),
+        : m_deficit (0),
         m_status (INACTIVE)
     {
-        NS_LOG_FUNCTION (this);
     }
 
     DrrFlow::~DrrFlow ()
     {
-        NS_LOG_FUNCTION (this);
     } 
 
     //SetDeficit, GetDeficit, IncreaseDeficit, SetStatus, FlowStatus, GetIndex, SetIndex taken from fq-codel-queue
@@ -50,7 +48,6 @@ namespace ns3 {
     int32_t
     DrrFlow::GetDeficit (void) const
     {
-        NS_LOG_FUNCTION (this);
         return m_deficit;
     }
 
@@ -71,14 +68,12 @@ namespace ns3 {
     void
     DrrFlow::SetStatus (FlowStatus status)
     {
-        NS_LOG_FUNCTION (this);
         m_status = status;
     }   
 
     DrrFlow::FlowStatus
     DrrFlow::GetStatus (void) const
     {
-        NS_LOG_FUNCTION (this);
         return m_status;
     }
 
@@ -102,20 +97,18 @@ namespace ns3 {
 
     //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (1)
+        : m_quantum (53)
     {
-        NS_LOG_FUNCTION (this);
+        NS_LOG_FUNCTION (this << "quantum set to " << m_quantum);
     }
 
     DrrQueueDisc::~DrrQueueDisc ()
     {
-        NS_LOG_FUNCTION (this);
     }
 
     void
     DrrQueueDisc::SetQuantum (uint32_t quantum)
     {
-        NS_LOG_FUNCTION (this << quantum);
         m_quantum = quantum;
     }
 
@@ -135,8 +128,6 @@ namespace ns3 {
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
-        NS_LOG_FUNCTION (this << item);
-
         // Extract flow from item
         uint32_t index = item->Hash ();
         NS_LOG_DEBUG ("Hash output " << index << " for packet item " << item);
@@ -180,7 +171,6 @@ namespace ns3 {
     DrrQueueDisc::DoDequeue (void)
     {
         //follow pseudocode from figure 4 of paper
-        NS_LOG_FUNCTION (this);
 
         Ptr<DrrFlow> flow;
         Ptr<QueueDiscItem> item;
@@ -199,6 +189,7 @@ namespace ns3 {
                 {
                     Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
                     uint32_t headSize = head->GetSize ();
+                    NS_LOG_DEBUG("Head packet size " << headSize << " with deficit " << flow->GetDeficit ());
                     if (headSize <= flow->GetDeficit ()) {
                         flow->DecreaseDeficit (headSize);
                         Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
@@ -215,13 +206,11 @@ namespace ns3 {
                 {
                     flow->SetDeficit(0);
                     flow->SetStatus(DrrFlow::INACTIVE);
-                    NS_LOG_DEBUG("Flow is empty, setting deficit to 0 and status to inactive");
                 }
                 else
                 {
                     //add flow to end of the active list
                     m_activeList.push_back(flow);
-                    NS_LOG_DEBUG("Flow still has packets, inserting at end of active list");
                 }
             } else {
                 NS_LOG_DEBUG("No active flows to dequeue, returning null");
@@ -235,8 +224,6 @@ namespace ns3 {
     void
     DrrQueueDisc::InitializeParams (void)
     {
-        NS_LOG_FUNCTION (this);
-
         m_flowFactory.SetTypeId ("ns3::DrrFlow");
 
         // Use FIFO queue for each flow (simplest logic)
@@ -247,8 +234,6 @@ namespace ns3 {
     DrrQueueDisc::DrrDrop (void)
     {
         // Commented out to pass compilation. Will revisit if needed
-
-        // NS_LOG_FUNCTION (this);
 
         // uint32_t maxBacklog = 0, index = 0;
         // Ptr<QueueDisc> qd;

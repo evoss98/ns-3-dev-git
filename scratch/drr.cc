@@ -110,7 +110,8 @@ main (int argc, char *argv[])
   std::string normalFlowInterval = "50ms"; // 20 packets/s
   std::string illBehavedFlowInterval = "16.7ms"; // 60 packets/s
 
-  int packetSize = 25; // bytes = 100 bits. Try random between 0 and 4500 bits
+  // NOTE that packet header is 28 bytes, so this results in total packet size 53 bytes
+  int packetSize = 25; // 25 bytes = 100 bits. Try random between 0 and 4500 bits
   int time = 2000; // run simulation for x seconds
 
   /* NS-3 is great when it comes to logging. It allows logging in different
