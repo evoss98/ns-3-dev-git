@@ -202,6 +202,8 @@ namespace ns3 {
                     if (headSize <= flow->GetDeficit ()) {
                         flow->DecreaseDeficit (headSize);
                         Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
+                        //add flow to end of the active list
+                        m_activeList.push_back(flow);
                         return item;
                     } else {
                         break;
