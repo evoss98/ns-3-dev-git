@@ -239,8 +239,8 @@ namespace ns3 {
 
         m_flowFactory.SetTypeId ("ns3::DrrFlow");
 
-        // is there a simpler base queue disc we can use here?
-        m_queueDiscFactory.SetTypeId ("ns3::CoDelQueueDisc");
+        // Use FIFO queue for each flow (simplest logic)
+        m_queueDiscFactory.SetTypeId ("ns3::FifoQueueDisc");
     }
 
     uint32_t

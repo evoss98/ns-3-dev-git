@@ -193,6 +193,7 @@ main (int argc, char *argv[])
   // use the correct attribute name to set the size of the bottleneck queue.
   TrafficControlHelper tchPfifo;
   tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
+  // tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
 
   // tchPfifo.Install (h1s0_NetDevices);
   QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
