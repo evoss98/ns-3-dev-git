@@ -111,8 +111,8 @@ namespace ns3 {
             //        BooleanValue (true),
             //        MakeBooleanAccessor (&FqCoDelQueueDisc::m_useEcn),
             //        MakeBooleanChecker ())
-    ;
-    return tid;
+        ;
+        return tid;
     }
 
     //DrrQueueDisc, SetQuantum, GetQUantum taken from FqCoDel queue code
@@ -158,11 +158,12 @@ namespace ns3 {
     bool 
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
-
         NS_LOG_FUNCTION (this << item);
 
-        //Extract flow from item
+        // Extract flow from item
         int32_t ret = Classify (item);
+        NS_LOG_DEBUG ("Classify output " << ret << " for packet item " << item);
+
         uint32_t index;
 
         if (ret != PacketFilter::PF_NO_MATCH)
@@ -172,12 +173,11 @@ namespace ns3 {
         else
         {
           NS_LOG_ERROR ("No filter has been able to classify this packet, drop it.");
-          //DropBeforeEnqueue (item, UNCLASSIFIED_DROP);
-          //return false;
+          return false;
 
+          //DropBeforeEnqueue (item, UNCLASSIFIED_DROP);
           //What should we do here? Either drop or create a seperate flow. Could use
           //index = max number output queues (m_flows)
-
         }
 
         //check if index is in m_flowIndicies. If not, add to m_flowIndicies and create flow.
