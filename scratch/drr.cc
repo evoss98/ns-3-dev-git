@@ -82,7 +82,7 @@ UdpReceiverTracer (Ptr<OutputStreamWrapper> stream,
 {
   InetSocketAddress socketAdd = InetSocketAddress::ConvertFrom (srcAddress);
 
-  *stream->GetStream () << Simulator::Now ().GetSeconds () << "," << "port:"
+  *stream->GetStream () << Simulator::Now ().GetSeconds () << ","
                         << socketAdd.GetPort () << ","
                         << packet->GetSize () << std::endl;
 }
@@ -114,13 +114,18 @@ main (int argc, char *argv[])
 
   int time = 2000; // run simulation for x seconds
 
+  std::string queueDisc = "drr";
+  CommandLine cmd (__FILE__);
+  cmd.AddValue ("queueDisc", "The queue disc to use", queueDisc);
+  cmd.Parse (argc, argv);
+
   /* NS-3 is great when it comes to logging. It allows logging in different
    * levels for different component (scripts/modules). You can read more
    * about that at https://www.nsnam.org/docs/manual/html/logging.html.
    */
   LogComponentEnable("DRRExample", LOG_LEVEL_DEBUG);
 
-  NS_LOG_DEBUG("DRR Simulation for:" <<
+  NS_LOG_DEBUG("Simulation with queueDisc:" << queueDisc <<
                " flowPerHost=" << flowPerHost << " illBehavedFlowNumber=" << illBehavedFlowNumber <<
                " normalFlowInterval=" << normalFlowInterval << " illBehavedFlowInterval=" <<
                illBehavedFlowInterval << " time=" << time);
@@ -129,11 +134,11 @@ main (int argc, char *argv[])
   /* Traces will be written on these files for postprocessing. */
   std::string dir = "outputs/drr/";
 
-  std::string qStreamName = dir + "q.tr";
+  std::string qStreamName = dir + queueDisc + "_" + "q.tr";
   Ptr<OutputStreamWrapper> qStream;
   qStream = asciiTraceHelper.CreateFileStream (qStreamName);
 
-  std::string udpReceiverStreamName = dir + "receivedPacket.tr";
+  std::string udpReceiverStreamName = dir + queueDisc + "_" + "receivedPacket.tr";
   Ptr<OutputStreamWrapper> udpReceiverStream;
   udpReceiverStream = asciiTraceHelper.CreateFileStream (udpReceiverStreamName);
 
@@ -193,8 +198,11 @@ main (int argc, char *argv[])
 
   // use the correct attribute name to set the size of the bottleneck queue.
   TrafficControlHelper tchPfifo;
-  tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
-  // tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+  if (queueDisc == "drr") {
+    tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
+  } else {
+    tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+  }
 
   // tchPfifo.Install (h1s0_NetDevices);
   QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
@@ -226,7 +234,7 @@ main (int argc, char *argv[])
 
 
   /* The sender Application */
-  for (int i = 0; i < flowPerHost; i++) {
+  for (int i = 1; i <= flowPerHost; i++) {
     UdpClientHelper sendHelper (s0h2_interfaces.GetAddress (1), receiverPort);
 
     sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
@@ -238,9 +246,8 @@ main (int argc, char *argv[])
 
     // NOTE: packet header is 28 bytes
     // so this results in total packet size x + 28 bytes
-    // Use random between 100 and 4500 bits
-    // uint32_t packetSize = (int)(((rand() % 4401) + 100) / 8);
-    uint32_t packetSize = 200;
+    // Use random between 100 and 200 bits
+    uint32_t packetSize = (int)(((rand() % 101) + 100) / 8);
     NS_LOG_DEBUG("Flow " << i << " has packet size " << packetSize);
     sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 

@@ -17,31 +17,47 @@ parser.add_argument('--dir', '-d',
                     dest="dir")
 args = parser.parse_args()
 
-portToThroughput = {}
+fifoPortToThroughput = {}
+drrPortToThroughput = {}
 
-with open(os.path.join(args.dir, 'receivedPacket.tr'),'r') as f:
+with open(os.path.join(args.dir, 'fifo_receivedPacket.tr'),'r') as f:
     for line in f:
         receivedPacketRow = line.split(',')
 
-        port = receivedPacketRow[1];
+        port = int(receivedPacketRow[1]) - 49152;
         size = int(receivedPacketRow[2]);
-        if port in portToThroughput:
-            portToThroughput[port] = portToThroughput[port] + size;
+        if port in fifoPortToThroughput:
+            fifoPortToThroughput[port] = fifoPortToThroughput[port] + size;
         else:
-            portToThroughput[port] = size;
+            fifoPortToThroughput[port] = size;
 
-for k in portToThroughput:
-    portToThroughput[k] = portToThroughput[k] / 1000
+with open(os.path.join(args.dir, 'drr_receivedPacket.tr'),'r') as f:
+    for line in f:
+        receivedPacketRow = line.split(',')
 
-x = []
-for i in range(1, 21, 1):
-    x.append(i)
+        port = int(receivedPacketRow[1]) - 49152;
+        size = int(receivedPacketRow[2]);
+        if port in drrPortToThroughput:
+            drrPortToThroughput[port] = drrPortToThroughput[port] + size;
+        else:
+            drrPortToThroughput[port] = size;
 
-print(portToThroughput.values())
+for k in fifoPortToThroughput:
+    fifoPortToThroughput[k] = fifoPortToThroughput[k] / 1000
+
+
+for k in drrPortToThroughput:
+    drrPortToThroughput[k] = drrPortToThroughput[k] / 1000
+
+
+print(fifoPortToThroughput)
+print(drrPortToThroughput)
+
 throughputFileName = os.path.join(args.dir, 'flows_throughput.png')
 
 plt.figure()
-plt.plot(x, portToThroughput.values(), 'bs')
+plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs',
+    drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
 plt.savefig(throughputFileName)

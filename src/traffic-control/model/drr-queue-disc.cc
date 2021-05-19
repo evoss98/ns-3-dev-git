@@ -96,7 +96,7 @@ namespace ns3 {
 
     //DrrQueueDisc constructor/destructor, SetQuantum, GetQuantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (53)
+        : m_quantum (50)
     {
         NS_LOG_FUNCTION (this << "quantum set to " << m_quantum);
     }
@@ -183,7 +183,7 @@ namespace ns3 {
                 //increment deficit
                 flow->IncreaseDeficit(m_quantum);
 
-                while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetCurrentSize ().GetValue () > 0)
+                while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetNPackets () > 0)
                 {
                     Ptr<const QueueDiscItem> head = flow->GetQueueDisc ()->Peek ();
                     uint32_t headSize = head->GetSize ();
@@ -192,8 +192,18 @@ namespace ns3 {
                     {
                         flow->DecreaseDeficit (headSize);
                         Ptr<QueueDiscItem> item = flow->GetQueueDisc ()->Dequeue ();
-                        //add flow to end of the active list
-                        m_activeList.push_back(flow);
+                        
+                        if(flow->GetQueueDisc()->GetNPackets() == 0)
+                        {
+                            //if the queue is empty, set deficit to zero, status to inactive
+                            flow->SetDeficit(0);
+                            flow->SetStatus(DrrFlow::INACTIVE);
+                        }
+                        else
+                        {
+                            //add flow to end of the active list
+                            m_activeList.push_back(flow);
+                        }
                         return item;
                     } 
                     else
@@ -202,9 +212,9 @@ namespace ns3 {
                     }
                 }
 
-                //if the queue is empty, set deficit to zero, status to inactive
                 if(flow->GetQueueDisc()->GetNPackets() == 0)
                 {
+                    //if the queue is empty, set deficit to zero, status to inactive
                     flow->SetDeficit(0);
                     flow->SetStatus(DrrFlow::INACTIVE);
                 }
