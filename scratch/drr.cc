@@ -82,8 +82,9 @@ UdpReceiverTracer (Ptr<OutputStreamWrapper> stream,
 {
   InetSocketAddress socketAdd = InetSocketAddress::ConvertFrom (srcAddress);
 
-  *stream->GetStream () << Simulator::Now ().GetSeconds () << " received packet from: "
-                        << socketAdd.GetPort () << std::endl;
+  *stream->GetStream () << Simulator::Now ().GetSeconds () << "," << "port:"
+                        << socketAdd.GetPort () << ","
+                        << packet->GetSize () << std::endl;
 }
 
 static void
@@ -111,8 +112,6 @@ main (int argc, char *argv[])
   std::string normalFlowInterval = "50ms"; // 20 packets/s
   std::string illBehavedFlowInterval = "16.7ms"; // 60 packets/s
 
-  // NOTE that packet header is 28 bytes, so this results in total packet size 53 bytes
-  int packetSize = 25; // 25 bytes = 100 bits. Try random between 0 and 4500 bits
   int time = 2000; // run simulation for x seconds
 
   /* NS-3 is great when it comes to logging. It allows logging in different
@@ -124,7 +123,7 @@ main (int argc, char *argv[])
   NS_LOG_DEBUG("DRR Simulation for:" <<
                " flowPerHost=" << flowPerHost << " illBehavedFlowNumber=" << illBehavedFlowNumber <<
                " normalFlowInterval=" << normalFlowInterval << " illBehavedFlowInterval=" <<
-               illBehavedFlowInterval << " time=" << time << " packetSize=" << packetSize);
+               illBehavedFlowInterval << " time=" << time);
 
   /******** Declare output files ********/
   /* Traces will be written on these files for postprocessing. */
@@ -236,6 +235,12 @@ main (int argc, char *argv[])
     } else {
       sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
     }
+
+    // NOTE: packet header is 28 bytes
+    // so this results in total packet size x + 28 bytes
+    // Use random between 100 and 4500 bits
+    uint32_t packetSize = (int)(((rand() % 4401) + 100) / 8); 
+    NS_LOG_DEBUG("Flow " << i << " has packet size " << packetSize);
     sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
     // Install the source application on the correct host.
