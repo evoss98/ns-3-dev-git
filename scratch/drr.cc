@@ -175,7 +175,7 @@ main (int argc, char *argv[])
   hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
   PointToPointHelper bottleneckLink;
-  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("40Kbps"));
+  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("100Kbps"));
   bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
   bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
@@ -248,7 +248,9 @@ main (int argc, char *argv[])
     // so this results in total packet size x + 28 bytes
     // Use random between 100 and 200 bits
     uint32_t packetSize = (int)(((rand() % 101) + 100) / 8);
-    NS_LOG_DEBUG("Flow " << i << " has packet size " << packetSize);
+    NS_LOG_DEBUG("Flow " << i << " has packet size " << packetSize
+      << ", bit rate " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20)
+      << " bits/s");
     sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
     // Install the source application on the correct host.
