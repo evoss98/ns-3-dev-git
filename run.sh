@@ -8,7 +8,7 @@ DIR=outputs/drr
 # Run the NS-3 Simulation
 ./waf --run "scratch/drr"
 # Plot the trace figures
-# python3 scratch/plot_bufferbloat_figures.py --dir $DIR/
+python2.7 scratch/plot_figures.py --dir $DIR/
 
 echo "Simulations are done!"
 # python3 -m http.server
