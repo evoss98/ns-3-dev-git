@@ -329,10 +329,12 @@ SfqQueueDisc::InitializeParams (void)
   // set the quantum to the MTU of the device, only applicable for ns-3 version
   if (!m_quantum && !m_useNs2Impl)
     {
-      Ptr<NetDevice> device = GetNetDevice ();
-      NS_ASSERT_MSG (device, "Device not set for the queue disc");
-      m_quantum = device->GetMtu ();
-      NS_LOG_DEBUG ("Setting the quantum to the MTU of the device: " << m_quantum);
+      // Ptr<NetDevice> device = GetNetDevice ();
+      // NS_ASSERT_MSG (device, "Device not set for the queue disc");
+      // m_quantum = device->GetMtu ();
+      // NS_LOG_DEBUG ("Setting the quantum to the MTU of the device: " << m_quantum);
+      m_quantum = 50;
+      NS_LOG_DEBUG("Setting quantum to " << m_quantum);
     }
   // Ensure that flows and max size have some value set
   if (m_flows == 0 || GetMaxSize ().GetValue () == 0)
@@ -359,7 +361,7 @@ SfqQueueDisc::InitializeParams (void)
   rand = CreateObject<UniformRandomVariable> ();
   rand->SetAttribute ("Min", DoubleValue (0));
   rand->SetAttribute ("Max", DoubleValue (UINT32_MAX));
-  if (m_perturbTime != 0)
+  if (!m_perturbTime.IsZero())
     {
       Simulator::Schedule (m_perturbTime, &SfqQueueDisc::PerturbHash, this);
     }
