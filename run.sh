@@ -5,7 +5,7 @@
 DIR=outputs/drr
 [ ! -d $DIR ] && mkdir $DIR
 
-for QUEUEDISC in "fifo" "drr"; do
+for QUEUEDISC in "fifo" "drr" "sfq"; do
 	
 	# Run the NS-3 Simulation
 	./waf --run "scratch/drr --queueDisc=$QUEUEDISC"

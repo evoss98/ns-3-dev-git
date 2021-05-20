@@ -19,6 +19,7 @@ args = parser.parse_args()
 
 fifoPortToThroughput = {}
 drrPortToThroughput = {}
+sfqPortToThroughput = {}
 
 with open(os.path.join(args.dir, 'fifo_receivedPacket.tr'),'r') as f:
     for line in f:
@@ -42,22 +43,36 @@ with open(os.path.join(args.dir, 'drr_receivedPacket.tr'),'r') as f:
         else:
             drrPortToThroughput[port] = size;
 
+with open(os.path.join(args.dir, 'sfq_receivedPacket.tr'),'r') as f:
+    for line in f:
+        receivedPacketRow = line.split(',')
+
+        port = int(receivedPacketRow[1]) - 49152;
+        size = int(receivedPacketRow[2]);
+        if port in sfqPortToThroughput:
+            sfqPortToThroughput[port] = sfqPortToThroughput[port] + size;
+        else:
+            sfqPortToThroughput[port] = size;
+
 for k in fifoPortToThroughput:
     fifoPortToThroughput[k] = fifoPortToThroughput[k] / 1000
-
 
 for k in drrPortToThroughput:
     drrPortToThroughput[k] = drrPortToThroughput[k] / 1000
 
+for k in sfqPortToThroughput:
+    sfqPortToThroughput[k] = sfqPortToThroughput[k] / 1000
 
 print(fifoPortToThroughput)
 print(drrPortToThroughput)
+print(sfqPortToThroughput)
 
 throughputFileName = os.path.join(args.dir, 'flows_throughput.png')
 
 plt.figure()
 plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs',
-    drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go')
+    drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go',
+    sfqPortToThroughput.keys(), sfqPortToThroughput.values(), 'r^')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
 plt.savefig(throughputFileName)

@@ -44,6 +44,7 @@
 #include "ns3/traffic-control-module.h"
 #include "ns3/udp-client-server-helper.h"
 #include "ns3/drr-queue-disc.h"
+#include "ns3/sfq-queue-disc.h"
 
 using namespace ns3;
 
@@ -200,6 +201,8 @@ main (int argc, char *argv[])
   TrafficControlHelper tchPfifo;
   if (queueDisc == "drr") {
     tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc");
+  } else if (queueDisc == "sfq") {
+    tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc");
   } else {
     tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
   }
