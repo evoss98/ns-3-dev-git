@@ -249,10 +249,10 @@ main (int argc, char *argv[])
 
     // NOTE: packet header is 28 bytes
     // so this results in total packet size x + 28 bytes
-    // Use random between 100 and 200 bits
-    uint32_t packetSize = (int)(((rand() % 101) + 100) / 8);
-    NS_LOG_DEBUG("Flow " << i << " has packet size " << packetSize
-      << ", bit rate " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20)
+    // Use random bits between 100 and 200 bytes
+    uint32_t packetSize = 200;
+    NS_LOG_DEBUG("Flow " << i << " has random packet size between " << packetSize / 2 << " and " << packetSize
+      << ", expected bit rate " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20)
       << " bits/s");
     sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 

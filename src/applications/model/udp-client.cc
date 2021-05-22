@@ -175,7 +175,8 @@ UdpClient::Send (void)
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
+  uint32_t randomizedPacketSize = (uint32_t)(rand() % (m_size / 2 + 1) + m_size / 2);
+  Ptr<Packet> p = Create<Packet> (randomizedPacketSize-(8+4)); // 8+4 : the size of the seqTs header
   p->AddHeader (seqTs);
 
   std::stringstream peerAddressStringStream;
@@ -192,7 +193,7 @@ UdpClient::Send (void)
     {
       ++m_sent;
       m_totalTx += p->GetSize ();
-      NS_LOG_INFO ("TraceDelay TX " << m_size << " bytes to "
+      NS_LOG_INFO ("TraceDelay TX " << randomizedPacketSize << " bytes to "
                                     << peerAddressStringStream.str () << " Uid: "
                                     << p->GetUid () << " Time: "
                                     << (Simulator::Now ()).As (Time::S));
@@ -200,7 +201,7 @@ UdpClient::Send (void)
     }
   else
     {
-      NS_LOG_INFO ("Error while sending " << m_size << " bytes to "
+      NS_LOG_INFO ("Error while sending " << randomizedPacketSize << " bytes to "
                                           << peerAddressStringStream.str ());
     }
 
