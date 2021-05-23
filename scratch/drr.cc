@@ -113,7 +113,7 @@ main (int argc, char *argv[])
   std::string normalFlowInterval = "50ms"; // 20 packets/s
   std::string illBehavedFlowInterval = "16.7ms"; // 60 packets/s
 
-  int time = 2000; // run simulation for x seconds
+  int time = 200; // run simulation for x seconds
 
   std::string queueDisc = "drr";
   uint32_t quantum = 50;
@@ -178,7 +178,7 @@ main (int argc, char *argv[])
   hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
   PointToPointHelper bottleneckLink;
-  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("100Kbps"));
+  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
   bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
   bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 

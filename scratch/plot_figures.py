@@ -79,10 +79,10 @@ plt.plot(drr100PortToThroughput.keys(), drr100PortToThroughput.values(), 'go-', 
 plt.plot(drr200PortToThroughput.keys(), drr200PortToThroughput.values(), 'r^-', label='quantum=200')
 plt.plot(drr500PortToThroughput.keys(), drr500PortToThroughput.values(), 'y^-', label='quantum=500')
 
-plt.legend(loc='upper right')
+plt.legend(loc='lower right')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
 plt.title('Different quantum values used in DRR')
-plt.ylim(1000, 1200)
+plt.ylim(900, 1200)
 plt.savefig(drrQuantumFileName)
 print('Saving ' + drrQuantumFileName)
