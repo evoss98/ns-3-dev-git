@@ -175,7 +175,7 @@ UdpClient::Send (void)
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  uint32_t randomizedPacketSize = (uint32_t)(rand() % (m_size / 2 + 1) + m_size / 2);
+  uint32_t randomizedPacketSize = (uint32_t)(rand() % (m_size + 1) + 12);
   Ptr<Packet> p = Create<Packet> (randomizedPacketSize-(8+4)); // 8+4 : the size of the seqTs header
   p->AddHeader (seqTs);
 

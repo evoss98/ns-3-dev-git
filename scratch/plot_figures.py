@@ -70,10 +70,12 @@ print(sfqPortToThroughput)
 throughputFileName = os.path.join(args.dir, 'flows_throughput.png')
 
 plt.figure()
-plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs',
-    drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go',
-    sfqPortToThroughput.keys(), sfqPortToThroughput.values(), 'r^')
+line1 = plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs', label='fifo')
+line2 = plt.plot(drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go', label='drr')
+line3 = plt.plot(sfqPortToThroughput.keys(), sfqPortToThroughput.values(), 'r^', label='sfq')
+plt.legend(loc='upper right')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
+plt.title('Throughput for flows using quantum = 50')
 plt.savefig(throughputFileName)
 print('Saving ' + throughputFileName)
