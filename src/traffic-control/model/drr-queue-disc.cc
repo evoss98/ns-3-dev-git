@@ -28,13 +28,24 @@ namespace ns3 {
     //constuctor and deconstructor. Adapted from fq-codel-queue
     DrrFlow::DrrFlow ()
         : m_deficit (0),
-        m_status (INACTIVE)
+        m_status (INACTIVE),
+        m_hasDeficitBumped (false)
     {
     }
 
     DrrFlow::~DrrFlow ()
     {
     } 
+
+    void DrrFlow::SetHasBumped (bool hasBumped)
+    {
+        m_hasDeficitBumped = hasBumped;
+    }
+
+    bool DrrFlow::GetHasBumped (void) const
+    {
+        return m_hasDeficitBumped;
+    }
 
     //SetDeficit, GetDeficit, IncreaseDeficit, SetStatus, FlowStatus taken from fq-codel-queue
     void
@@ -179,7 +190,10 @@ namespace ns3 {
                 m_activeList.pop_front();
 
                 //increment deficit
-                flow->IncreaseDeficit(m_quantum);
+                if (!flow->GetHasBumped()) {
+                    flow->IncreaseDeficit(m_quantum);
+                    flow->SetHasBumped(true);
+                }
 
                 while(flow->GetDeficit () > 0 && flow->GetQueueDisc ()->GetNPackets () > 0)
                 {
@@ -196,6 +210,7 @@ namespace ns3 {
                             //if the queue is empty, set deficit to zero, status to inactive
                             flow->SetDeficit(0);
                             flow->SetStatus(DrrFlow::INACTIVE);
+                            flow->SetHasBumped(false);
                         }
                         else
                         {
@@ -210,11 +225,13 @@ namespace ns3 {
                     }
                 }
 
+                flow->SetHasBumped(false);
                 if(flow->GetQueueDisc()->GetNPackets() == 0)
                 {
                     //if the queue is empty, set deficit to zero, status to inactive
                     flow->SetDeficit(0);
                     flow->SetStatus(DrrFlow::INACTIVE);
+                    
                 }
                 else
                 {

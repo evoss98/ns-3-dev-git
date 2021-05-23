@@ -69,9 +69,21 @@ namespace ns3 {
         */
         FlowStatus GetStatus (void) const;
 
+        /**
+        * \brief Set the has_bumped status for this flow
+        * \param hasBumped the has_bumped status for this flow
+        */
+        void SetHasBumped (bool hasBumped);
+        /**
+        * \brief Get the has_bumped status of this flow
+        * \return the has_bumped status of this flow
+        */
+        bool GetHasBumped (void) const;
+
     private:
         int32_t m_deficit;    //!< the deficit for this flow
         FlowStatus m_status;  //!< the status of this flow
+        bool m_hasDeficitBumped;  //!< whether the deficit has already been bumped in this round
     };
 
 

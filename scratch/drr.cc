@@ -116,8 +116,10 @@ main (int argc, char *argv[])
   int time = 2000; // run simulation for x seconds
 
   std::string queueDisc = "drr";
+  uint32_t quantum = 50;
   CommandLine cmd (__FILE__);
   cmd.AddValue ("queueDisc", "The queue disc to use", queueDisc);
+  cmd.AddValue ("quantum", "The quantum for the drr queue disc", quantum);
   cmd.Parse (argc, argv);
 
   /* NS-3 is great when it comes to logging. It allows logging in different
@@ -135,11 +137,11 @@ main (int argc, char *argv[])
   /* Traces will be written on these files for postprocessing. */
   std::string dir = "outputs/drr/";
 
-  std::string qStreamName = dir + queueDisc + "_" + "q.tr";
+  std::string qStreamName = dir + queueDisc + "_" + std::to_string(quantum) + "_q.tr";
   Ptr<OutputStreamWrapper> qStream;
   qStream = asciiTraceHelper.CreateFileStream (qStreamName);
 
-  std::string udpReceiverStreamName = dir + queueDisc + "_" + "receivedPacket.tr";
+  std::string udpReceiverStreamName = dir + queueDisc + "_" + std::to_string(quantum) + "_receivedPacket.tr";
   Ptr<OutputStreamWrapper> udpReceiverStream;
   udpReceiverStream = asciiTraceHelper.CreateFileStream (udpReceiverStreamName);
 
@@ -200,9 +202,9 @@ main (int argc, char *argv[])
   // use the correct attribute name to set the size of the bottleneck queue.
   TrafficControlHelper tchPfifo;
   if (queueDisc == "drr") {
-    tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (50));
+    tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
   } else if (queueDisc == "sfq") {
-    tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (50));
+    tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
   } else {
     tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
   }
