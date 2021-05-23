@@ -112,6 +112,11 @@ TypeId SfqQueueDisc::GetTypeId (void)
                    UintegerValue (0),
                    MakeUintegerAccessor (&SfqQueueDisc::m_flowLimit),
                    MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("Quantum",
+                   "The quantum value to use",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&SfqQueueDisc::m_quantum),
+                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("Flows",
                    "The number of queues into which the incoming packets are classified",
                    UintegerValue (1024),

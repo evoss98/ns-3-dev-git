@@ -84,21 +84,19 @@ namespace ns3 {
             .SetParent<QueueDisc> ()
             .SetGroupName ("TrafficControl")
             .AddConstructor<DrrQueueDisc> ()
-            // TODO: add quantum as an attribute
-            // .AddAttribute ("UseEcn",
-            //        "True to use ECN (packets are marked instead of being dropped)",
-            //        BooleanValue (true),
-            //        MakeBooleanAccessor (&FqCoDelQueueDisc::m_useEcn),
-            //        MakeBooleanChecker ())
+            .AddAttribute ("Quantum",
+                           "The quantum value to use",
+                           UintegerValue (0),
+                           MakeUintegerAccessor (&DrrQueueDisc::m_quantum),
+                           MakeUintegerChecker<uint32_t> ())
         ;
         return tid;
     }
 
     //DrrQueueDisc constructor/destructor, SetQuantum, GetQuantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (50)
+        : m_quantum (0)
     {
-        NS_LOG_FUNCTION (this << "quantum set to " << m_quantum);
     }
 
     DrrQueueDisc::~DrrQueueDisc ()
@@ -201,8 +199,8 @@ namespace ns3 {
                         }
                         else
                         {
-                            //add flow to end of the active list
-                            m_activeList.push_back(flow);
+                            //add flow back to front of the active list since the flow has packets left
+                            m_activeList.push_front(flow);
                         }
                         return item;
                     } 
