@@ -45,6 +45,8 @@
 #include "ns3/udp-client-server-helper.h"
 #include "ns3/drr-queue-disc.h"
 #include "ns3/sfq-queue-disc.h"
+#include "ns3/flow-monitor.h"
+#include "ns3/flow-monitor-helper.h"
 
 using namespace ns3;
 
@@ -262,6 +264,12 @@ main (int argc, char *argv[])
     sourceApp.Stop (Seconds ((double)time));
   }
 
+  //Flow Monitor, using for measuring delays
+  Ptr<FlowMonitor> flowMonitor;
+  FlowMonitorHelper flowHelper;
+  flowMonitor = flowHelper.InstallAll();
+
+
   /* Start tracing the RTT after the connection is established */
   Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceUDPPacketReceived, udpReceiverStream);
 
@@ -273,6 +281,10 @@ main (int argc, char *argv[])
   //       you have actually not run the simulation yet. Complete the command
   //       below to run it.
   Simulator::Run ();
+
+  std::string flowFileName = dir + queueDisc + "_" + std::to_string(quantum) + ".xml";
+
+  flowMonitor->SerializeToXmlFile(flowFileName, true, true);
   Simulator::Destroy ();
   return 0;
 }

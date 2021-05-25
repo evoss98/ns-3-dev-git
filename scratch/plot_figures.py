@@ -8,6 +8,7 @@ Modified by: Ang Li & Erin Voss
 import argparse
 import os
 import matplotlib.pyplot as plt
+import xml.etree.ElementTree as ET
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dir', '-d',
@@ -86,3 +87,53 @@ plt.title('Different quantum values used in DRR')
 plt.ylim(900, 1200)
 plt.savefig(drrQuantumFileName)
 print('Saving ' + drrQuantumFileName)
+
+#process delay data. drr_50.xml, fifo_50.xml, sfq_50.xml
+
+files = ["drr_50.xml", "fifo_50.xml", "sfq_50.xml"]
+dictionary_data = {}
+
+print("processing delay data...")
+
+for file_name in files:
+    name = os.path.join(args.dir, file_name)
+    dictionary = {}
+
+    print("processing file: " + name)
+    tree = ET.parse(name)
+    root = tree.getroot()
+
+    count = 0
+    for flowStats in root:
+        for flow in flowStats:
+            if 'delaySum' in flow.attrib:
+                count += 1
+                delay_string = flow.attrib['delaySum']
+                ns = delay_string.find("ns")
+                delay_string = delay_string[0: ns]
+                delay = float(delay_string)
+                dictionary[count] = delay
+
+    dictionary_data[file_name] = dictionary
+
+
+delayFileName = os.path.join(args.dir, 'flows_delay_50.png')
+
+drr50delay = dictionary_data[files[0]]
+fifo50delay = dictionary_data[files[1]]
+sfq50delay = dictionary_data[files[2]]
+
+print(drr50delay)
+print(fifo50delay)
+print(sfq50delay)
+
+plt.figure()
+plt.plot(fifo50delay.keys(), fifo50delay.values(), 'bs-', label='fifo')
+plt.plot(drr50delay.keys(), drr50delay.values(), 'go-', label='drr')
+plt.plot(sfq50delay.keys(), sfq50delay.values(), 'r^-', label='sfq')
+plt.legend(loc='upper right')
+plt.ylabel('Total Delay Sum')
+plt.xlabel('Flow')
+plt.title('Total Delay Sum using quantum = 50')
+plt.savefig(delayFileName)
+print('Saving ' + delayFileName)
