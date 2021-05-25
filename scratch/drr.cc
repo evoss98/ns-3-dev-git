@@ -19,11 +19,18 @@
  * Modified by: Ang Li & Erin Voss
  *
  * Deficit Round Robin Topology
+ * Single hop:
  *
  *    h1-----------------s0-----------------h2
- *    h3-----------------s0
- *    ...
- *    hN-----------------s0
+ *
+ * Multi hop:
+ *
+ *    h1-----------------s0-----------------s1--------------h3
+ *                                           |
+ *                                           |
+ *                                           |
+ *                                          h2
+ *
  *
  *  Usage (e.g.):
  *    sudo ./waf --run 'drr'
@@ -87,11 +94,12 @@ UdpReceiverTracer (Ptr<OutputStreamWrapper> stream,
 
   *stream->GetStream () << Simulator::Now ().GetSeconds () << ","
                         << socketAdd.GetPort () << ","
-                        << packet->GetSize () << std::endl;
+                        << packet->GetSize () << ","
+                        << socketAdd.GetIpv4 () << std::endl;
 }
 
 static void
-TraceUDPPacketReceived (Ptr<OutputStreamWrapper> udpReceivedStream)
+TraceUDPPacketReceived (Ptr<OutputStreamWrapper> udpReceivedStream, std::string nodeNumberStr)
 {
   // Use the correct TraceSource in order to trace
   // the packet received by the UDP server.
@@ -100,7 +108,7 @@ TraceUDPPacketReceived (Ptr<OutputStreamWrapper> udpReceivedStream)
    * keeps a hierarchical list of all available modules created for the
    * simulation
    */
-  Config::ConnectWithoutContext ("/NodeList/2/ApplicationList/0/$ns3::UdpServer/RxWithAddresses",
+  Config::ConnectWithoutContext ("/NodeList/" + nodeNumberStr + "/ApplicationList/0/$ns3::UdpServer/RxWithAddresses",
                                  MakeBoundCallback (&UdpReceiverTracer, udpReceivedStream));
 }
 
@@ -119,9 +127,11 @@ main (int argc, char *argv[])
 
   std::string queueDisc = "drr";
   uint32_t quantum = 50;
+  bool multiHop = false;
   CommandLine cmd (__FILE__);
   cmd.AddValue ("queueDisc", "The queue disc to use", queueDisc);
   cmd.AddValue ("quantum", "The quantum for the drr queue disc", quantum);
+  cmd.AddValue ("multiHop", "Whether the simulation uses a multi-hop topology", multiHop);
   cmd.Parse (argc, argv);
 
   /* NS-3 is great when it comes to logging. It allows logging in different
@@ -133,17 +143,18 @@ main (int argc, char *argv[])
   NS_LOG_DEBUG("Simulation with queueDisc:" << queueDisc <<
                " flowPerHost=" << flowPerHost << " illBehavedFlowNumber=" << illBehavedFlowNumber <<
                " normalFlowInterval=" << normalFlowInterval << " illBehavedFlowInterval=" <<
-               illBehavedFlowInterval << " time=" << time);
+               illBehavedFlowInterval << " time=" << time << " quantum=" << quantum
+               << " multiHop=" << multiHop);
 
   /******** Declare output files ********/
   /* Traces will be written on these files for postprocessing. */
   std::string dir = "outputs/drr/";
 
-  std::string qStreamName = dir + queueDisc + "_" + std::to_string(quantum) + "_q.tr";
+  std::string qStreamName = dir + queueDisc + "_" + std::to_string(quantum) + (!multiHop ? "" : "_multi") + "_q.tr";
   Ptr<OutputStreamWrapper> qStream;
   qStream = asciiTraceHelper.CreateFileStream (qStreamName);
 
-  std::string udpReceiverStreamName = dir + queueDisc + "_" + std::to_string(quantum) + "_receivedPacket.tr";
+  std::string udpReceiverStreamName = dir + queueDisc + "_" + std::to_string(quantum) + (!multiHop ? "" : "_multi") + "_receivedPacket.tr";
   Ptr<OutputStreamWrapper> udpReceiverStream;
   udpReceiverStream = asciiTraceHelper.CreateFileStream (udpReceiverStreamName);
 
@@ -156,112 +167,251 @@ main (int argc, char *argv[])
   /* Nodes are the used for end-hosts, switches etc. */
   NS_LOG_DEBUG("Creating Nodes...");
 
-  NodeContainer nodes;
-  // create 3 nodes.
-  nodes.Create (3);
+  if (!multiHop) {
 
-  Ptr<Node> h1 = nodes.Get (0);
-  Ptr<Node> s0 = nodes.Get (1);
-  Ptr<Node> h2 = nodes.Get (2);
+    NodeContainer nodes;
+    // create 3 nodes.
+    nodes.Create (3);
 
-  /******** Create Channels ********/
-  /* Channels are used to connect different nodes in the network. There are
-   * different types of channels one can use to simulate different environments
-   * such as ethernet or wireless. In our case, we would like to simulate a
-   * cable that directly connects two nodes. These cables have particular
-   * properties (ie. propagation delay and link rate) and they need to be set
-   * before installing them on nodes.
-   */
-  NS_LOG_DEBUG("Configuring Channels...");
+    Ptr<Node> h1 = nodes.Get (0);
+    Ptr<Node> s0 = nodes.Get (1);
+    Ptr<Node> h2 = nodes.Get (2);
 
-  PointToPointHelper hostLink;
-  hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-  hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
-  hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+    /******** Create Channels ********/
+    /* Channels are used to connect different nodes in the network. There are
+     * different types of channels one can use to simulate different environments
+     * such as ethernet or wireless. In our case, we would like to simulate a
+     * cable that directly connects two nodes. These cables have particular
+     * properties (ie. propagation delay and link rate) and they need to be set
+     * before installing them on nodes.
+     */
+    NS_LOG_DEBUG("Configuring Channels...");
 
-  PointToPointHelper bottleneckLink;
-  bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-  bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
-  bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+    PointToPointHelper hostLink;
+    hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
-  /******** Create NetDevices ********/
-  NS_LOG_DEBUG("Creating NetDevices...");
+    PointToPointHelper bottleneckLink;
+    bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
-  /* When channels are installed in between nodes, NS-3 creates NetDevices for
-   * the associated nodes that simulate the Network Interface Cards connecting
-   * the channel and the node.
-   */
-  // install the links created above in between correct nodes.
-  NetDeviceContainer h1s0_NetDevices = hostLink.Install (h1, s0);
-  NetDeviceContainer s0h2_NetDevices = bottleneckLink.Install (s0, h2);
+    /******** Create NetDevices ********/
+    NS_LOG_DEBUG("Creating NetDevices...");
 
-  /******** Install Internet Stack ********/
-  NS_LOG_DEBUG("Installing Internet Stack...");
+    /* When channels are installed in between nodes, NS-3 creates NetDevices for
+     * the associated nodes that simulate the Network Interface Cards connecting
+     * the channel and the node.
+     */
+    // install the links created above in between correct nodes.
+    NetDeviceContainer h1s0_NetDevices = hostLink.Install (h1, s0);
+    NetDeviceContainer s0h2_NetDevices = bottleneckLink.Install (s0, h2);
 
-  InternetStackHelper stack;
-  stack.InstallAll ();
+    /******** Install Internet Stack ********/
+    NS_LOG_DEBUG("Installing Internet Stack...");
 
-  // use the correct attribute name to set the size of the bottleneck queue.
-  TrafficControlHelper tchPfifo;
-  if (queueDisc == "drr") {
-    tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
-  } else if (queueDisc == "sfq") {
-    tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
-  } else {
-    tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
-  }
+    InternetStackHelper stack;
+    stack.InstallAll ();
 
-  QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
-  /* Trace Bottleneck Queue Occupancy */
-  s0h2_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
-                            MakeBoundCallback (&QueueOccupancyTracer, qStream));
-
-  /* Set IP addresses of the nodes in the network */
-  Ipv4AddressHelper address;
-  address.SetBase ("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer h1s0_interfaces = address.Assign (h1s0_NetDevices);
-  address.NewNetwork ();
-  Ipv4InterfaceContainer s0h2_interfaces = address.Assign (s0h2_NetDevices);
-
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-
-  /******** Setting up the Application ********/
-  NS_LOG_DEBUG("Setting up the Application...");
-
-
-  /* The receiver application */
-  uint16_t receiverPort = 5001;
-
-  // Install the receiver application on the correct host.
-  UdpServerHelper receiverHelper (receiverPort);
-  ApplicationContainer receiverApp = receiverHelper.Install (h2);
-  receiverApp.Start (Seconds (0.0));
-  receiverApp.Stop (Seconds ((double)time));
-
-
-  /* The sender Application */
-  for (int i = 1; i <= flowPerHost; i++) {
-    UdpClientHelper sendHelper (s0h2_interfaces.GetAddress (1), receiverPort);
-
-    sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
-    if (i == illBehavedFlowNumber) {
-      sendHelper.SetAttribute ("Interval", StringValue (illBehavedFlowInterval));
+    // use the correct attribute name to set the size of the bottleneck queue.
+    TrafficControlHelper tchPfifo;
+    if (queueDisc == "drr") {
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
+    } else if (queueDisc == "sfq") {
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
     } else {
-      sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
+      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
     }
 
-    // NOTE: packet header is 28 bytes
-    // so this results in total packet size x + 28 bytes
-    // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
-    uint32_t packetSize = 560;
-    NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
-      << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
-    sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
+    QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
+    /* Trace Bottleneck Queue Occupancy */
+    s0h2_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
+                              MakeBoundCallback (&QueueOccupancyTracer, qStream));
 
-    // Install the source application on the correct host.
-    ApplicationContainer sourceApp = sendHelper.Install (h1);
-    sourceApp.Start (Seconds (0.0));
-    sourceApp.Stop (Seconds ((double)time));
+    /* Set IP addresses of the nodes in the network */
+    Ipv4AddressHelper address;
+    address.SetBase ("10.0.0.0", "255.255.255.0");
+    Ipv4InterfaceContainer h1s0_interfaces = address.Assign (h1s0_NetDevices);
+    address.NewNetwork ();
+    Ipv4InterfaceContainer s0h2_interfaces = address.Assign (s0h2_NetDevices);
+
+    Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
+    /******** Setting up the Application ********/
+    NS_LOG_DEBUG("Setting up the Application...");
+
+
+    /* The receiver application */
+    uint16_t receiverPort = 5001;
+
+    // Install the receiver application on the correct host.
+    UdpServerHelper receiverHelper (receiverPort);
+    ApplicationContainer receiverApp = receiverHelper.Install (h2);
+    receiverApp.Start (Seconds (0.0));
+    receiverApp.Stop (Seconds ((double)time));
+
+
+    /* The sender Application */
+    for (int i = 1; i <= flowPerHost; i++) {
+      UdpClientHelper sendHelper (s0h2_interfaces.GetAddress (1), receiverPort);
+
+      sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
+      if (i == illBehavedFlowNumber) {
+        sendHelper.SetAttribute ("Interval", StringValue (illBehavedFlowInterval));
+      } else {
+        sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
+      }
+
+      // NOTE: packet header is 28 bytes
+      // so this results in total packet size x + 28 bytes
+      // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
+      uint32_t packetSize = 560;
+      NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
+        << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
+      sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
+
+      // Install the source application on the correct host.
+      ApplicationContainer sourceApp = sendHelper.Install (h1);
+      sourceApp.Start (Seconds (0.0));
+      sourceApp.Stop (Seconds ((double)time));
+    }
+  } else {
+    // Multi-hop topology
+    NodeContainer nodes;
+    // create 5 nodes.
+    nodes.Create (5);
+
+    Ptr<Node> h1 = nodes.Get (0);
+    Ptr<Node> s0 = nodes.Get (1);
+    Ptr<Node> h2 = nodes.Get (2);
+    Ptr<Node> s1 = nodes.Get (3);
+    Ptr<Node> h3 = nodes.Get (4);
+
+    /******** Create Channels ********/
+    /* Channels are used to connect different nodes in the network. There are
+     * different types of channels one can use to simulate different environments
+     * such as ethernet or wireless. In our case, we would like to simulate a
+     * cable that directly connects two nodes. These cables have particular
+     * properties (ie. propagation delay and link rate) and they need to be set
+     * before installing them on nodes.
+     */
+    NS_LOG_DEBUG("Configuring Channels...");
+
+    PointToPointHelper hostLink;
+    hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+
+    PointToPointHelper hostLink2;
+    hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+
+    PointToPointHelper bottleneckLink;
+    bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+
+    PointToPointHelper bottleneckLink2;
+    bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+
+    /******** Create NetDevices ********/
+    NS_LOG_DEBUG("Creating NetDevices...");
+
+    /* When channels are installed in between nodes, NS-3 creates NetDevices for
+     * the associated nodes that simulate the Network Interface Cards connecting
+     * the channel and the node.
+     */
+    // install the links created above in between correct nodes.
+    NetDeviceContainer h1s0_NetDevices = hostLink.Install (h1, s0);
+    NetDeviceContainer h2s1_NetDevices = hostLink2.Install (h2, s1);
+    NetDeviceContainer s0s1_NetDevices = bottleneckLink.Install (s0, s1);
+    NetDeviceContainer s1h3_NetDevices = bottleneckLink2.Install (s1, h3);
+
+    /******** Install Internet Stack ********/
+    NS_LOG_DEBUG("Installing Internet Stack...");
+
+    InternetStackHelper stack;
+    stack.InstallAll ();
+
+    // use the correct attribute name to set the size of the bottleneck queue.
+    TrafficControlHelper tchPfifo;
+    if (queueDisc == "drr") {
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
+    } else if (queueDisc == "sfq") {
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
+    } else {
+      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+    }
+
+    // QueueDiscContainer s0s1_QueueDiscs = tchPfifo.Install (s0s1_NetDevices);
+    // /* Trace Bottleneck Queue Occupancy */
+    // s0s1_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
+    //                           MakeBoundCallback (&QueueOccupancyTracer, qStream));
+
+    QueueDiscContainer s1h3_QueueDiscs = tchPfifo.Install (s1h3_NetDevices);
+    /* Trace Bottleneck Queue Occupancy */
+    s1h3_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
+                              MakeBoundCallback (&QueueOccupancyTracer, qStream));
+
+    /* Set IP addresses of the nodes in the network */
+    Ipv4AddressHelper address;
+    address.SetBase ("10.0.0.0", "255.255.255.0");
+    Ipv4InterfaceContainer h1s0_interfaces = address.Assign (h1s0_NetDevices);
+    address.NewNetwork ();
+    Ipv4InterfaceContainer h2s1_interfaces = address.Assign (h2s1_NetDevices);
+    address.NewNetwork ();
+    Ipv4InterfaceContainer s0s1_interfaces = address.Assign (s0s1_NetDevices);
+    address.NewNetwork ();
+    Ipv4InterfaceContainer s1h3_interfaces = address.Assign (s1h3_NetDevices);
+
+    Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
+    /******** Setting up the Application ********/
+    NS_LOG_DEBUG("Setting up the Application...");
+
+
+    /* The receiver application */
+    uint16_t receiverPort = 5001;
+
+    // Install the receiver application on the correct host.
+    UdpServerHelper receiverHelper (receiverPort);
+    ApplicationContainer receiverApp = receiverHelper.Install (h3);
+    receiverApp.Start (Seconds (0.0));
+    receiverApp.Stop (Seconds ((double)time));
+
+
+    /* The sender Application */
+    for (int i = 1; i <= flowPerHost; i++) {
+      UdpClientHelper sendHelper (s1h3_interfaces.GetAddress (1), receiverPort);
+
+      sendHelper.SetAttribute ("MaxPackets", UintegerValue (100000));
+      if (i == illBehavedFlowNumber) {
+        sendHelper.SetAttribute ("Interval", StringValue (illBehavedFlowInterval));
+      } else {
+        sendHelper.SetAttribute ("Interval", StringValue (normalFlowInterval));
+      }
+
+      // NOTE: packet header is 28 bytes
+      // so this results in total packet size x + 28 bytes
+      // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
+      uint32_t packetSize = 560;
+      NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
+        << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
+      sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
+
+      // Install the source application on the correct host.
+      ApplicationContainer sourceApp = sendHelper.Install (h1);
+      sourceApp.Start (Seconds (0.0));
+      sourceApp.Stop (Seconds ((double)time));
+
+      ApplicationContainer sourceApp2 = sendHelper.Install (h2);
+      sourceApp2.Start (Seconds (0.0));
+      sourceApp2.Stop (Seconds ((double)time));
+    }
   }
 
   //Flow Monitor, using for measuring delays
@@ -271,18 +421,14 @@ main (int argc, char *argv[])
 
 
   /* Start tracing the RTT after the connection is established */
-  Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceUDPPacketReceived, udpReceiverStream);
+  Simulator::Schedule (Seconds (TRACE_START_TIME), &TraceUDPPacketReceived, udpReceiverStream, std::to_string(multiHop ? 4 : 2));
 
   /******** Run the Actual Simulation ********/
   NS_LOG_DEBUG("Running the Simulation...");
   Simulator::Stop (Seconds ((double)time));
-  // TODO: Up until now, you have only set up the simulation environment and
-  //       described what kind of events you want NS3 to simulate. However
-  //       you have actually not run the simulation yet. Complete the command
-  //       below to run it.
   Simulator::Run ();
 
-  std::string flowFileName = dir + queueDisc + "_" + std::to_string(quantum) + ".xml";
+  std::string flowFileName = dir + queueDisc + "_" + std::to_string(quantum) + (!multiHop ? "" : "_multi") + ".xml";
 
   flowMonitor->SerializeToXmlFile(flowFileName, true, true);
   Simulator::Destroy ();
