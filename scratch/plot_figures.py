@@ -109,10 +109,11 @@ for file_name in files:
             if 'delaySum' in flow.attrib:
                 count += 1
                 delay_string = flow.attrib['delaySum']
+                num_packets = flow.attrib['rxPackets']
                 ns = delay_string.find("ns")
                 delay_string = delay_string[0: ns]
                 delay = float(delay_string)
-                dictionary[count] = delay
+                dictionary[count] = delay / float(num_packets)
 
     dictionary_data[file_name] = dictionary
 
@@ -132,8 +133,8 @@ plt.plot(fifo50delay.keys(), fifo50delay.values(), 'bs-', label='fifo')
 plt.plot(drr50delay.keys(), drr50delay.values(), 'go-', label='drr')
 plt.plot(sfq50delay.keys(), sfq50delay.values(), 'r^-', label='sfq')
 plt.legend(loc='upper right')
-plt.ylabel('Total Delay Sum (ns)')
+plt.ylabel('Avg Delay Sum (ns)')
 plt.xlabel('Flow')
-plt.title('Total Delay Sum using quantum = 50')
+plt.title('Avg Delay Sum using quantum = 50')
 plt.savefig(delayFileName)
 print('Saving ' + delayFileName)
