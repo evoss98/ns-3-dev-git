@@ -51,7 +51,7 @@ processData('sfq_50_receivedPacket.tr', sfqPortToThroughput)
 # print(drrPortToThroughput)
 # print(sfqPortToThroughput)
 
-throughputFileName = os.path.join(args.dir, 'figures/flows_throughput_50.png')
+throughputFileName = os.path.join(args.dir, 'figures/single_flows_throughput_50.png')
 
 plt.figure()
 plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs-', label='fifo')
@@ -66,13 +66,38 @@ print('Saving ' + throughputFileName)
 
 
 
+fifoMultiHostAddressToThroughput = {}
+drrMultiHostAddressToThroughput = {}
+sfqMultiHostAddressToThroughput = {}
+
+processData('fifo_50_multihost_receivedPacket.tr', fifoMultiHostAddressToThroughput, True)
+processData('drr_50_multihost_receivedPacket.tr', drrMultiHostAddressToThroughput, True)
+processData('sfq_50_multihost_receivedPacket.tr', sfqMultiHostAddressToThroughput, True)
+
+print(drrMultiHostAddressToThroughput)
+
+multiHostThroughputFileName = os.path.join(args.dir, 'figures/multihost_flows_throughput_50.png')
+
+plt.figure()
+plt.plot(fifoMultiHostAddressToThroughput.keys(), fifoMultiHostAddressToThroughput.values(), 'bs-', label='fifo')
+plt.plot(drrMultiHostAddressToThroughput.keys(), drrMultiHostAddressToThroughput.values(), 'go-', label='drr')
+plt.plot(sfqMultiHostAddressToThroughput.keys(), sfqMultiHostAddressToThroughput.values(), 'r^-', label='sfq')
+plt.legend(loc='upper right')
+plt.ylabel('Total Throughput Received (Kbits)')
+plt.xlabel('Flow')
+plt.title('Multi-host throughput using quantum = 50')
+plt.savefig(multiHostThroughputFileName)
+print('Saving ' + multiHostThroughputFileName)
+
+
+
 fifoMultiHopAddressToThroughput = {}
 drrMultiHopAddressToThroughput = {}
 sfqMultiHopAddressToThroughput = {}
 
-processData('fifo_50_multi_receivedPacket.tr', fifoMultiHopAddressToThroughput, True)
-processData('drr_50_multi_receivedPacket.tr', drrMultiHopAddressToThroughput, True)
-processData('sfq_50_multi_receivedPacket.tr', sfqMultiHopAddressToThroughput, True)
+processData('fifo_50_multihost_multihop_receivedPacket.tr', fifoMultiHopAddressToThroughput, True)
+processData('drr_50_multihost_multihop_receivedPacket.tr', drrMultiHopAddressToThroughput, True)
+processData('sfq_50_multihost_multihop_receivedPacket.tr', sfqMultiHopAddressToThroughput, True)
 
 multiHopThroughputFileName = os.path.join(args.dir, 'figures/multihop_flows_throughput_50.png')
 
@@ -83,7 +108,7 @@ plt.plot(sfqMultiHopAddressToThroughput.keys(), sfqMultiHopAddressToThroughput.v
 plt.legend(loc='upper right')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
-plt.title('Throughput for flows using quantum = 50')
+plt.title('Multi-hop throughput using quantum = 50')
 plt.savefig(multiHopThroughputFileName)
 print('Saving ' + multiHopThroughputFileName)
 
@@ -145,15 +170,11 @@ for file_name in files:
     dictionary_data[file_name] = dictionary
 
 
-delayFileName = os.path.join(args.dir, 'figures/flows_delay_50.png')
+delayFileName = os.path.join(args.dir, 'figures/flows_avg_delay_50.png')
 
 drr50delay = dictionary_data[files[0]]
 fifo50delay = dictionary_data[files[1]]
 sfq50delay = dictionary_data[files[2]]
-
-# print(drr50delay)
-# print(fifo50delay)
-# print(sfq50delay)
 
 plt.figure()
 plt.plot(fifo50delay.keys(), fifo50delay.values(), 'bs-', label='fifo')
