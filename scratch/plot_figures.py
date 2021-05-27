@@ -51,7 +51,7 @@ processData('sfq_50_receivedPacket.tr', sfqPortToThroughput)
 # print(drrPortToThroughput)
 # print(sfqPortToThroughput)
 
-throughputFileName = os.path.join(args.dir, 'flows_throughput_50.png')
+throughputFileName = os.path.join(args.dir, 'figures/flows_throughput_50.png')
 
 plt.figure()
 plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs-', label='fifo')
@@ -74,7 +74,7 @@ processData('fifo_50_multi_receivedPacket.tr', fifoMultiHopAddressToThroughput, 
 processData('drr_50_multi_receivedPacket.tr', drrMultiHopAddressToThroughput, True)
 processData('sfq_50_multi_receivedPacket.tr', sfqMultiHopAddressToThroughput, True)
 
-multiHopThroughputFileName = os.path.join(args.dir, 'multihop_flows_throughput_50.png')
+multiHopThroughputFileName = os.path.join(args.dir, 'figures/multihop_flows_throughput_50.png')
 
 plt.figure()
 plt.plot(fifoMultiHopAddressToThroughput.keys(), fifoMultiHopAddressToThroughput.values(), 'bs-', label='fifo')
@@ -99,7 +99,7 @@ processData('drr_100_receivedPacket.tr', drr100PortToThroughput)
 processData('drr_200_receivedPacket.tr', drr200PortToThroughput)
 processData('drr_500_receivedPacket.tr', drr500PortToThroughput)
 
-drrQuantumFileName = os.path.join(args.dir, 'drr_quantum_throughput.png')
+drrQuantumFileName = os.path.join(args.dir, 'figures/drr_quantum_throughput.png')
 
 plt.figure()
 plt.plot(drr50PortToThroughput.keys(), drr50PortToThroughput.values(), 'bs-', label='quantum=50')
@@ -145,7 +145,7 @@ for file_name in files:
     dictionary_data[file_name] = dictionary
 
 
-delayFileName = os.path.join(args.dir, 'flows_delay_50.png')
+delayFileName = os.path.join(args.dir, 'figures/flows_delay_50.png')
 
 drr50delay = dictionary_data[files[0]]
 fifo50delay = dictionary_data[files[1]]
