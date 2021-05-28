@@ -200,12 +200,12 @@ main (int argc, char *argv[])
 
     PointToPointHelper hostLink;
     hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     /******** Create NetDevices ********/
@@ -310,17 +310,17 @@ main (int argc, char *argv[])
 
     PointToPointHelper hostLink;
     hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper hostLink2;
     hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     /******** Create NetDevices ********/
@@ -406,7 +406,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.25));
+      sourceApp2.Start (Seconds (0.025));
       sourceApp2.Stop (Seconds ((double)time));
     }
   } else if (multiHop && multiHost){
@@ -433,22 +433,22 @@ main (int argc, char *argv[])
 
     PointToPointHelper hostLink;
     hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper hostLink2;
     hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink2;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("10ms"));
+    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
     bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     /******** Create NetDevices ********/
@@ -480,12 +480,9 @@ main (int argc, char *argv[])
       tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
     }
 
-    // QueueDiscContainer s0s1_QueueDiscs = tchPfifo.Install (s0s1_NetDevices);
-    // /* Trace Bottleneck Queue Occupancy */
-    // s0s1_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
-    //                           MakeBoundCallback (&QueueOccupancyTracer, qStream));
-
     QueueDiscContainer s1h3_QueueDiscs = tchPfifo.Install (s1h3_NetDevices);
+    tchPfifo.Install (s0s1_NetDevices);
+
     /* Trace Bottleneck Queue Occupancy */
     s1h3_QueueDiscs.Get(0)->TraceConnectWithoutContext ("PacketsInQueue",
                               MakeBoundCallback (&QueueOccupancyTracer, qStream));
@@ -542,7 +539,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.25));
+      sourceApp2.Start (Seconds (0.025));
       sourceApp2.Stop (Seconds ((double)time));
     }
   }
