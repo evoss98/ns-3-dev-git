@@ -314,9 +314,9 @@ main (int argc, char *argv[])
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper hostLink2;
-    hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
-    hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+    hostLink2.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
+    hostLink2.SetChannelAttribute ("Delay", StringValue ("1ms"));
+    hostLink2.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
@@ -406,7 +406,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.0));
+      sourceApp2.Start (Seconds (0.025));
       sourceApp2.Stop (Seconds ((double)time));
     }
   } else if (multiHop && multiHost){
@@ -437,9 +437,9 @@ main (int argc, char *argv[])
     hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper hostLink2;
-    hostLink.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
-    hostLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
-    hostLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+    hostLink2.SetDeviceAttribute ("DataRate", StringValue ("1Gbps"));
+    hostLink2.SetChannelAttribute ("Delay", StringValue ("1ms"));
+    hostLink2.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink;
     bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
@@ -447,9 +447,9 @@ main (int argc, char *argv[])
     bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     PointToPointHelper bottleneckLink2;
-    bottleneckLink.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
-    bottleneckLink.SetChannelAttribute ("Delay", StringValue ("1ms"));
-    bottleneckLink.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
+    bottleneckLink2.SetDeviceAttribute ("DataRate", StringValue ("1Mbps"));
+    bottleneckLink2.SetChannelAttribute ("Delay", StringValue ("1ms"));
+    bottleneckLink2.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1p"));
 
     /******** Create NetDevices ********/
     NS_LOG_DEBUG("Creating NetDevices...");
@@ -539,7 +539,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.0));
+      sourceApp2.Start (Seconds (0.025));
       sourceApp2.Stop (Seconds ((double)time));
     }
   }
