@@ -406,7 +406,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.025));
+      sourceApp2.Start (Seconds (0.0));
       sourceApp2.Stop (Seconds ((double)time));
     }
   } else if (multiHop && multiHost){
@@ -539,7 +539,7 @@ main (int argc, char *argv[])
       sourceApp.Stop (Seconds ((double)time));
 
       ApplicationContainer sourceApp2 = sendHelper.Install (h2);
-      sourceApp2.Start (Seconds (0.025));
+      sourceApp2.Start (Seconds (0.0));
       sourceApp2.Stop (Seconds ((double)time));
     }
   }

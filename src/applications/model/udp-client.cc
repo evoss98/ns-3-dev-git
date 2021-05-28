@@ -207,7 +207,8 @@ UdpClient::Send (void)
 
   if (m_sent < m_count)
     {
-      m_sendEvent = Simulator::Schedule (m_interval, &UdpClient::Send, this);
+      int64_t milliSeconds = m_interval.GetMilliSeconds ();
+      m_sendEvent = Simulator::Schedule (MilliSeconds (rand() % (milliSeconds * 2 + 1)), &UdpClient::Send, this);
     }
 }
 
