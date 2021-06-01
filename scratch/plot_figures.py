@@ -51,6 +51,19 @@ processData('sfq_50_receivedPacket.tr', sfqPortToThroughput)
 # print(drrPortToThroughput)
 # print(sfqPortToThroughput)
 
+mainReproFileName = os.path.join(args.dir, 'figures/main_repro_figure.png')
+
+plt.figure()
+plt.plot(fifoPortToThroughput.keys(), fifoPortToThroughput.values(), 'bs-', label='fifo')
+plt.plot(drrPortToThroughput.keys(), drrPortToThroughput.values(), 'go-', label='drr')
+plt.legend(loc='upper right')
+plt.ylabel('Total Throughput Received (Kbits)')
+plt.xlabel('Flow')
+plt.title('Throughput for flows using quantum = 50')
+plt.savefig(mainReproFileName)
+print('Saving ' + mainReproFileName)
+
+
 throughputFileName = os.path.join(args.dir, 'figures/single_flows_throughput_50.png')
 
 plt.figure()
@@ -73,8 +86,6 @@ sfqMultiHostAddressToThroughput = {}
 processData('fifo_50_multihost_receivedPacket.tr', fifoMultiHostAddressToThroughput, True)
 processData('drr_50_multihost_receivedPacket.tr', drrMultiHostAddressToThroughput, True)
 processData('sfq_50_multihost_receivedPacket.tr', sfqMultiHostAddressToThroughput, True)
-
-print(drrMultiHostAddressToThroughput)
 
 multiHostThroughputFileName = os.path.join(args.dir, 'figures/multihost_flows_throughput_50.png')
 
@@ -121,6 +132,8 @@ drr200PortToThroughput = {}
 drr500PortToThroughput = {}
 drr560PortToThroughput = {}
 drr1000PortToThroughput = {}
+drr5000PortToThroughput = {}
+drr10000PortToThroughput = {}
 
 processData('drr_25_receivedPacket.tr', drr25PortToThroughput)
 processData('drr_50_receivedPacket.tr', drr50PortToThroughput)
@@ -129,6 +142,8 @@ processData('drr_200_receivedPacket.tr', drr200PortToThroughput)
 processData('drr_500_receivedPacket.tr', drr500PortToThroughput)
 processData('drr_560_receivedPacket.tr', drr560PortToThroughput)
 processData('drr_1000_receivedPacket.tr', drr1000PortToThroughput)
+processData('drr_5000_receivedPacket.tr', drr5000PortToThroughput)
+processData('drr_10000_receivedPacket.tr', drr10000PortToThroughput)
 
 drrQuantumFileName = os.path.join(args.dir, 'figures/drr_quantum_throughput.png')
 
@@ -140,6 +155,8 @@ plt.plot(drr200PortToThroughput.keys(), drr200PortToThroughput.values(), 'r^-', 
 plt.plot(drr500PortToThroughput.keys(), drr500PortToThroughput.values(), 'y^-', label='quantum=500')
 plt.plot(drr560PortToThroughput.keys(), drr560PortToThroughput.values(), 'k>-', label='quantum=560')
 plt.plot(drr1000PortToThroughput.keys(), drr1000PortToThroughput.values(), 'mx-', label='quantum=1000')
+plt.plot(drr5000PortToThroughput.keys(), drr5000PortToThroughput.values(), 'r<-', label='quantum=5000')
+plt.plot(drr10000PortToThroughput.keys(), drr10000PortToThroughput.values(), 'bD-', label='quantum=10000')
 
 plt.legend(loc='lower right')
 plt.ylabel('Total Throughput Received (Kbits)')
