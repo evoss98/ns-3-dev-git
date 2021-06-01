@@ -50,46 +50,39 @@ SfqFlow::SfqFlow ()
   : m_allot (0),
     m_status (SFQ_EMPTY_SLOT)
 {
-  NS_LOG_FUNCTION (this);
 }
 
 SfqFlow::~SfqFlow ()
 {
-  NS_LOG_FUNCTION (this);
 }
 
 void
 SfqFlow::SetAllot (uint32_t allot)
 {
-  NS_LOG_FUNCTION (this << allot);
   m_allot = allot;
 }
 
 int32_t
 SfqFlow::GetAllot (void) const
 {
-  NS_LOG_FUNCTION (this);
   return m_allot;
 }
 
 void
 SfqFlow::IncreaseAllot (int32_t allot)
 {
-  NS_LOG_FUNCTION (this << allot);
   m_allot += allot;
 }
 
 void
 SfqFlow::SetStatus (FlowStatus status)
 {
-  NS_LOG_FUNCTION (this);
   m_status = status;
 }
 
 SfqFlow::FlowStatus
 SfqFlow::GetStatus (void) const
 {
-  NS_LOG_FUNCTION (this);
   return m_status;
 }
 
@@ -124,18 +117,15 @@ TypeId SfqQueueDisc::GetTypeId (void)
 SfqQueueDisc::SfqQueueDisc ()
   : QueueDisc (QueueDiscSizePolicy::MULTIPLE_QUEUES, QueueSizeUnit::PACKETS)
 {
-  NS_LOG_FUNCTION (this);
 }
 
 SfqQueueDisc::~SfqQueueDisc ()
 {
-  NS_LOG_FUNCTION (this);
 }
 
 bool
 SfqQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
-  NS_LOG_FUNCTION (this << item);
   uint32_t h = item->Hash () % m_flows;
 
   Ptr<SfqFlow> flow;
@@ -152,6 +142,7 @@ SfqQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     }
   else
     {
+      // NS_LOG_DEBUG ("Item hash " << item->Hash() << " mapped to flow " << h);
       flow = StaticCast<SfqFlow> (GetQueueDiscClass (m_flowsIndices[h]));
     }
 
@@ -162,7 +153,7 @@ SfqQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   }
   m_currentQueueSize += 1;
 
-  NS_LOG_DEBUG ("Packet enqueued into flow " << h << "; flow index " << m_flowsIndices[h] << "; current queue size " << m_currentQueueSize);
+  // NS_LOG_DEBUG ("Packet enqueued into flow " << h << "; flow index " << m_flowsIndices[h] << "; current queue size " << m_currentQueueSize);
   if (flow->GetStatus () == SfqFlow::SFQ_EMPTY_SLOT)
     {
       flow->SetStatus (SfqFlow::SFQ_IN_USE);
@@ -182,12 +173,15 @@ SfqQueueDisc::DropFromLongestQueue (void)
     {
         qd = GetQueueDiscClass (i)->GetQueueDisc ();
         uint32_t bytes = qd->GetNBytes ();
+        NS_LOG_DEBUG ("Queue " << i << " has bytes " << bytes);
         if (bytes > maxBacklog)
         {
             maxBacklog = bytes;
             index = i;
         }
-    }   
+    }
+
+    NS_LOG_DEBUG ("Dropping from flow index " << index << " with bytes " << maxBacklog);
 
     // drop just one packet from the longest queue
     qd = GetQueueDiscClass (index)->GetQueueDisc ();
@@ -196,15 +190,13 @@ SfqQueueDisc::DropFromLongestQueue (void)
     DropAfterDequeue (item, OVERLIMIT_DROP);
     m_currentQueueSize -= 1;
 
-    NS_LOG_DEBUG ("Packet dropped from flow index " << index << "; current queue size " << m_currentQueueSize);
+    // NS_LOG_DEBUG ("Packet dropped from flow index " << index << "; current queue size " << m_currentQueueSize);
     return index;
 }
 
 Ptr<QueueDiscItem>
 SfqQueueDisc::DoDequeue (void)
 {
-  NS_LOG_FUNCTION (this);
-
   Ptr<SfqFlow> flow;
   Ptr<QueueDiscItem> item;
 
@@ -217,13 +209,13 @@ SfqQueueDisc::DoDequeue (void)
       item = flow->GetQueueDisc ()->Dequeue ();
       if (!item)
         {
-          NS_LOG_DEBUG ("Could not get a packet from the selected flow queue" << flow);
+          // NS_LOG_DEBUG ("Could not get a packet from the selected flow queue" << flow);
           flow->SetStatus (SfqFlow::SFQ_EMPTY_SLOT);
           m_flowList.pop_front ();
         }
       else
         {
-          NS_LOG_DEBUG ("Dequeued packet from flow " << flow);
+          // NS_LOG_DEBUG ("Dequeued packet from flow " << flow);
           m_flowList.pop_front ();
           m_flowList.push_back (flow);
         }
@@ -237,7 +229,6 @@ SfqQueueDisc::DoDequeue (void)
 bool
 SfqQueueDisc::CheckConfig (void)
 {
-  NS_LOG_FUNCTION (this);
   if (GetNQueueDiscClasses () > 0)
     {
       NS_LOG_ERROR ("SfqQueueDisc cannot have classes");
@@ -255,13 +246,10 @@ SfqQueueDisc::CheckConfig (void)
 void
 SfqQueueDisc::InitializeParams (void)
 {
-  NS_LOG_FUNCTION (this);
-
   m_currentQueueSize = 0;
 
   m_flowFactory.SetTypeId ("ns3::SfqFlow");
   m_queueDiscFactory.SetTypeId ("ns3::FifoQueueDisc");
-  m_queueDiscFactory.Set ("MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, 1000000)));
 }
 
 
