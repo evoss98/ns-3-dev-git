@@ -228,7 +228,7 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
       tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
     } else {
@@ -344,7 +344,7 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
       tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
     } else {
@@ -473,7 +473,7 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
       tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
     } else {

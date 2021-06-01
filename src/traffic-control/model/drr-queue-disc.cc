@@ -100,13 +100,18 @@ namespace ns3 {
                            UintegerValue (0),
                            MakeUintegerAccessor (&DrrQueueDisc::m_quantum),
                            MakeUintegerChecker<uint32_t> ())
+            .AddAttribute ("MaxQueueSize",
+                           "The max queue size to use",
+                           UintegerValue (0),
+                           MakeUintegerAccessor (&DrrQueueDisc::m_maxQueueSize),
+                           MakeUintegerChecker<uint32_t> ())
         ;
         return tid;
     }
 
     //DrrQueueDisc constructor/destructor, SetQuantum, GetQuantum taken from FqCoDel queue code
     DrrQueueDisc::DrrQueueDisc ()
-        : m_quantum (0)
+        : m_quantum (0), m_maxQueueSize(0), m_currentQueueSize(0)
     {
     }
 
@@ -168,8 +173,11 @@ namespace ns3 {
         //enqueue the flow
         flow->GetQueueDisc ()->Enqueue (item);
 
-        //check if we need to drop packets.
-        //FreeBuffer() using buffer stealing?? Currently have a DrrDrop that drops one packet
+        NS_LOG_DEBUG ("Enqueueing, queue size " << m_currentQueueSize << " with max queue size " << m_maxQueueSize);
+        if (m_currentQueueSize >= m_maxQueueSize) {
+            DrrDropFromLongestQueue();
+        }
+        m_currentQueueSize += 1;
 
         return true;
     }
@@ -217,6 +225,7 @@ namespace ns3 {
                             //add flow back to front of the active list since the flow has packets left
                             m_activeList.push_front(flow);
                         }
+                        m_currentQueueSize -= 1;
                         return item;
                     } 
                     else
@@ -258,37 +267,30 @@ namespace ns3 {
     }
 
     uint32_t
-    DrrQueueDisc::DrrDrop (void)
+    DrrQueueDisc::DrrDropFromLongestQueue (void)
     {
-        // Commented out to pass compilation. Will revisit if needed
+        uint32_t maxBacklog = 0, index = 0;
+        Ptr<QueueDisc> qd;
 
-        // uint32_t maxBacklog = 0, index = 0;
-        // Ptr<QueueDisc> qd;
+        /* Queue is full! Find the fat flow and drop packet(s) from it */
+        for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
+        {
+            qd = GetQueueDiscClass (i)->GetQueueDisc ();
+            uint32_t bytes = qd->GetNBytes ();
+            if (bytes > maxBacklog)
+            {
+                maxBacklog = bytes;
+                index = i;
+            }
+        }   
 
-        // /* Queue is full! Find the fat flow and drop packet(s) from it */
-        // for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
-        // {
-        //     qd = GetQueueDiscClass (i)->GetQueueDisc ();
-        //     uint32_t bytes = qd->GetNBytes ();
-        //     if (bytes > maxBacklog)
-        //     {
-        //         maxBacklog = bytes;
-        //         index = i;
-        //     }
-        // }   
-
-        //drop just one packet. FqCoDel does similar, but drops half of the packets.
-        //is it correct to just drop one?
-
-        // uint32_t len = 0, count = 0, threshold = maxBacklog >> 1;
-        // qd = GetQueueDiscClass (index)->GetQueueDisc ();
-        // Ptr<QueueDiscItem> item;
-        // item = qd->GetInternalQueue (0)->Dequeue ();
-        // DropAfterDequeue (item, OVERLIMIT_DROP);
-        // return index;
-
-        return 0;
-    
+        // drop just one packet from the longest queue
+        qd = GetQueueDiscClass (index)->GetQueueDisc ();
+        Ptr<QueueDiscItem> item;
+        item = qd->GetInternalQueue (0)->Dequeue ();
+        DropAfterDequeue (item, OVERLIMIT_DROP);
+        m_currentQueueSize -= 1;
+        return index;
     }
 
 } //end namespace ns3
