@@ -162,7 +162,6 @@ plt.legend(loc='lower right')
 plt.ylabel('Total Throughput Received (Kbits)')
 plt.xlabel('Flow')
 plt.title('Different quantum values used in DRR')
-plt.ylim(900, 1200)
 plt.savefig(drrQuantumFileName)
 print('Saving ' + drrQuantumFileName)
 
