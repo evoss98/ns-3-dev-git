@@ -135,7 +135,7 @@ main (int argc, char *argv[])
   int time = 200; // run simulation for x seconds
 
   std::string queueDisc = "drr";
-  uint32_t quantum = 50;
+  uint32_t quantum = 500;
   bool multiHop = false;
   bool multiHost = false;
   CommandLine cmd (__FILE__);

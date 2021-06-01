@@ -13,7 +13,7 @@ for QUEUEDISC in "fifo" "drr" "sfq"; do
 	./waf --run "scratch/drr --queueDisc=$QUEUEDISC --multiHost=true --multiHop=true"
 done
 
-for QUANTUM in 25 100 200 500 560 1000 5000 10000; do
+for QUANTUM in 25 50 100 200 560 1000 5000 10000; do
 
 	# Run the NS-3 Simulation
 	./waf --run "scratch/drr --queueDisc=drr --quantum=$QUANTUM"
