@@ -140,17 +140,13 @@ private:
   virtual Ptr<QueueDiscItem> DoDequeue (void);
   virtual bool CheckConfig (void);
   virtual void InitializeParams (void);
-  virtual void PerturbHash ();
+  virtual uint32_t DropFromLongestQueue (void);
 
-  uint32_t m_perturbation;                 //!< hash perturbation value
   Time m_perturbTime;                      //!< interval after which perturbation takes place
   Ptr<UniformRandomVariable> rand;         //!< random number generator for perturbation
 
-  uint32_t m_flowLimit;      //!< Maximum number of packets in each flow
-  uint32_t m_quantum;        //!< Allotment assigned to flows at each round
+  uint32_t m_currentQueueSize;  //!< Current number of packets in the internal queue
   uint32_t m_flows;          //!< Number of flow queues
-  uint32_t m_fairshare;      //!< Soft limit on number of packets allowed in a single queue
-  bool     m_useNs2Impl;     //!< Whether to use an implementation of SFQ that matches ns-2
 
   std::list<Ptr<SfqFlow> > m_flowList;    //!< The list of new flows
 

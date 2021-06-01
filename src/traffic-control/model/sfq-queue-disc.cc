@@ -107,26 +107,11 @@ TypeId SfqQueueDisc::GetTypeId (void)
                    MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
                                           &QueueDisc::GetMaxSize),
                    MakeQueueSizeChecker ())
-    .AddAttribute ("FlowLimit",
-                   "The maximum number of packets each flow can have",
-                   UintegerValue (0),
-                   MakeUintegerAccessor (&SfqQueueDisc::m_flowLimit),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("Quantum",
-                   "The quantum value to use",
-                   UintegerValue (0),
-                   MakeUintegerAccessor (&SfqQueueDisc::m_quantum),
-                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("Flows",
                    "The number of queues into which the incoming packets are classified",
                    UintegerValue (1024),
                    MakeUintegerAccessor (&SfqQueueDisc::m_flows),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("Ns2Impl",
-                   "If enabled uses ns-2 implementation of SFQ",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&SfqQueueDisc::m_useNs2Impl),
-                   MakeBooleanChecker ())
     .AddAttribute ("PerturbationTime",
                    "The time duration after which salt used as an additional input to the hash function is changed",
                    TimeValue (MilliSeconds (100)),
@@ -137,8 +122,7 @@ TypeId SfqQueueDisc::GetTypeId (void)
 }
 
 SfqQueueDisc::SfqQueueDisc ()
-  : QueueDisc (QueueDiscSizePolicy::MULTIPLE_QUEUES, QueueSizeUnit::PACKETS),
-    m_quantum (0)
+  : QueueDisc (QueueDiscSizePolicy::MULTIPLE_QUEUES, QueueSizeUnit::PACKETS)
 {
   NS_LOG_FUNCTION (this);
 }
@@ -148,42 +132,11 @@ SfqQueueDisc::~SfqQueueDisc ()
   NS_LOG_FUNCTION (this);
 }
 
-void
-SfqQueueDisc::SetQuantum (uint32_t quantum)
-{
-  NS_LOG_FUNCTION (this << quantum);
-  m_quantum = quantum;
-}
-
-uint32_t
-SfqQueueDisc::GetQuantum (void) const
-{
-  return m_quantum;
-}
-
 bool
 SfqQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
-  int32_t ret = Classify (item); //classify returns a hash function based on the packet filters
-  uint32_t h;
-
-  if (GetNPacketFilters () == 0)
-    {
-      h = item->Hash (m_perturbation) % m_flows;
-    }
-  else
-  {
-    if (ret != PacketFilter::PF_NO_MATCH)
-      {
-        h = ret % m_flows;
-      }
-    else
-      {
-        NS_LOG_ERROR ("No filter has been able to classify this packet, place it in seperate flow.");
-        h = m_flows; // place all unfiltered packets into a seperate flow queue
-      }
-  }
+  uint32_t h = item->Hash () % m_flows;
 
   Ptr<SfqFlow> flow;
   if (m_flowsIndices.find (h) == m_flowsIndices.end ())
@@ -202,30 +155,49 @@ SfqQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
       flow = StaticCast<SfqFlow> (GetQueueDiscClass (m_flowsIndices[h]));
     }
 
-
-  uint32_t left = GetMaxSize ().GetValue () - GetNPackets ();
-  // Drop packet if number of packets exceeds fairshare or limit is reached
-  if ( (flow->GetQueueDisc ()->GetNPackets () >= (left >> 1) && m_useNs2Impl)
-       || (left < m_flows && flow->GetQueueDisc ()->GetNPackets () > m_fairshare)
-       || (left <= 0))
-    {
-      DropBeforeEnqueue (item, OVERLIMIT_DROP);
-      return false;
-    }
-
   flow->GetQueueDisc ()->Enqueue (item);
 
-  NS_LOG_DEBUG ("Packet enqueued into flow " << h << "; flow index " << m_flowsIndices[h]);
+  if (m_currentQueueSize >= GetMaxSize ().GetValue ()) {
+      DropFromLongestQueue();
+  }
+  m_currentQueueSize += 1;
+
+  NS_LOG_DEBUG ("Packet enqueued into flow " << h << "; flow index " << m_flowsIndices[h] << "; current queue size " << m_currentQueueSize);
   if (flow->GetStatus () == SfqFlow::SFQ_EMPTY_SLOT)
     {
       flow->SetStatus (SfqFlow::SFQ_IN_USE);
-      if (!m_useNs2Impl)
-        {
-          flow->SetAllot (m_quantum);
-        }
       m_flowList.push_back (flow);
     }
   return true;
+}
+
+uint32_t
+SfqQueueDisc::DropFromLongestQueue (void)
+{
+    uint32_t maxBacklog = 0, index = 0;
+    Ptr<QueueDisc> qd;
+
+    /* Queue is full! Find the fat flow and drop packet(s) from it */
+    for (uint32_t i = 0; i < GetNQueueDiscClasses (); i++)
+    {
+        qd = GetQueueDiscClass (i)->GetQueueDisc ();
+        uint32_t bytes = qd->GetNBytes ();
+        if (bytes > maxBacklog)
+        {
+            maxBacklog = bytes;
+            index = i;
+        }
+    }   
+
+    // drop just one packet from the longest queue
+    qd = GetQueueDiscClass (index)->GetQueueDisc ();
+    Ptr<QueueDiscItem> item;
+    item = qd->GetInternalQueue (0)->Dequeue ();
+    DropAfterDequeue (item, OVERLIMIT_DROP);
+    m_currentQueueSize -= 1;
+
+    NS_LOG_DEBUG ("Packet dropped from flow index " << index << "; current queue size " << m_currentQueueSize);
+    return index;
 }
 
 Ptr<QueueDiscItem>
@@ -236,74 +208,29 @@ SfqQueueDisc::DoDequeue (void)
   Ptr<SfqFlow> flow;
   Ptr<QueueDiscItem> item;
 
-  if (m_useNs2Impl)
+  do
     {
-      if (m_flowList.empty ())
-        {
-          NS_LOG_DEBUG ("No flow found to dequeue a packet");
-          return 0;
-        }
       flow = m_flowList.front ();
+      if (!flow) {
+        return 0;
+      }
       item = flow->GetQueueDisc ()->Dequeue ();
-      NS_LOG_DEBUG ("Dequeued packet " << item->GetPacket ());
-      if (flow->GetQueueDisc ()->GetNPackets () == 0)
+      if (!item)
         {
+          NS_LOG_DEBUG ("Could not get a packet from the selected flow queue" << flow);
           flow->SetStatus (SfqFlow::SFQ_EMPTY_SLOT);
           m_flowList.pop_front ();
         }
       else
         {
-          m_flowList.push_back (flow);
+          NS_LOG_DEBUG ("Dequeued packet from flow " << flow);
           m_flowList.pop_front ();
-        }
-      return item;
-    }
-  do
-    {
-      bool found = false;
-
-      while (!found && !m_flowList.empty ())
-        {
-          flow = m_flowList.front ();
-
-          if (flow->GetAllot () <= 0)
-            {
-              flow->IncreaseAllot (m_quantum);
-              m_flowList.push_back (flow);
-              m_flowList.pop_front ();
-            }
-          else
-            {
-              NS_LOG_DEBUG ("Found a new flow with positive value");
-              found = true;
-            }
-        }
-      if (!found)
-        {
-          NS_LOG_DEBUG ("No flow found to dequeue a packet");
-          return 0;
-        }
-
-      item = flow->GetQueueDisc ()->Dequeue ();
-
-      if (!item)
-        {
-          NS_LOG_DEBUG ("Could not get a packet from the selected flow queue");
-          if (!m_flowList.empty ())
-            {
-              flow->SetStatus (SfqFlow::SFQ_EMPTY_SLOT);
-              m_flowList.pop_front ();
-            }
-        }
-      else
-        {
-          NS_LOG_DEBUG ("Dequeued packet " << item->GetPacket ());
+          m_flowList.push_back (flow);
         }
     }
   while (item == 0);
 
-  flow->IncreaseAllot (item->GetSize () * -1);
-
+  m_currentQueueSize -= 1;
   return item;
 }
 
@@ -330,54 +257,12 @@ SfqQueueDisc::InitializeParams (void)
 {
   NS_LOG_FUNCTION (this);
 
-  // we are at initialization time. If the user has not set a quantum value,
-  // set the quantum to the MTU of the device, only applicable for ns-3 version
-  if (!m_quantum && !m_useNs2Impl)
-    {
-      // Ptr<NetDevice> device = GetNetDevice ();
-      // NS_ASSERT_MSG (device, "Device not set for the queue disc");
-      // m_quantum = device->GetMtu ();
-      // NS_LOG_DEBUG ("Setting the quantum to the MTU of the device: " << m_quantum);
-      m_quantum = 50;
-      NS_LOG_DEBUG("Setting quantum to " << m_quantum);
-    }
-  // Ensure that flows and max size have some value set
-  if (m_flows == 0 || GetMaxSize ().GetValue () == 0)
-    {
-      m_flows = 16;
-      SetMaxSize (QueueSize ("40p"));
-    }
-  if (m_flowLimit == 0)
-    {
-      m_flowLimit = GetMaxSize ().GetValue ();
-    }
-  // ns-2 version has no perturbation feature, so turn it off
-  if (m_useNs2Impl)
-  {
-    m_perturbation = 0;
-    m_perturbTime = Seconds(0);
-  }
+  m_currentQueueSize = 0;
+
   m_flowFactory.SetTypeId ("ns3::SfqFlow");
   m_queueDiscFactory.SetTypeId ("ns3::FifoQueueDisc");
-  m_queueDiscFactory.Set ("MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, m_flowLimit)));
-  m_fairshare = GetMaxSize ().GetValue () / m_flows;
-  
-  // Setup perturbation event
-  rand = CreateObject<UniformRandomVariable> ();
-  rand->SetAttribute ("Min", DoubleValue (0));
-  rand->SetAttribute ("Max", DoubleValue (UINT32_MAX));
-  if (!m_perturbTime.IsZero())
-    {
-      Simulator::Schedule (m_perturbTime, &SfqQueueDisc::PerturbHash, this);
-    }
+  m_queueDiscFactory.Set ("MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, 1000000)));
 }
 
-void
-SfqQueueDisc::PerturbHash (void)
-{
-  m_perturbation = rand->GetInteger ();
-  NS_LOG_DEBUG ("Set new perturbation value to " << m_perturbation);
-  Simulator::Schedule (m_perturbTime, &SfqQueueDisc::PerturbHash, this);
-}
 
 } // namespace ns3

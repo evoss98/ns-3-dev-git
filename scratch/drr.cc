@@ -230,9 +230,9 @@ main (int argc, char *argv[])
     if (queueDisc == "drr") {
       tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(100));
     } else {
-      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
 
     QueueDiscContainer s0h2_QueueDiscs = tchPfifo.Install (s0h2_NetDevices);
@@ -278,8 +278,8 @@ main (int argc, char *argv[])
       // so this results in total packet size x + 28 bytes
       // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
       uint32_t packetSize = 560;
-      NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
-        << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
+      // NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
+      //   << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
       sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
       // Install the source application on the correct host.
@@ -346,9 +346,9 @@ main (int argc, char *argv[])
     if (queueDisc == "drr") {
       tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(200));
     } else {
-      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
 
     QueueDiscContainer s0h3_QueueDiscs = tchPfifo.Install (s0h3_NetDevices);
@@ -396,8 +396,8 @@ main (int argc, char *argv[])
       // so this results in total packet size x + 28 bytes
       // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
       uint32_t packetSize = 560;
-      NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
-        << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
+      // NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
+      //   << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
       sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
       // Install the source application on the correct host.
@@ -475,9 +475,9 @@ main (int argc, char *argv[])
     if (queueDisc == "drr") {
       tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "Quantum", UintegerValue (quantum));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(200));
     } else {
-      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc");
+      tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
 
     QueueDiscContainer s1h3_QueueDiscs = tchPfifo.Install (s1h3_NetDevices);
@@ -529,8 +529,8 @@ main (int argc, char *argv[])
       // so this results in total packet size x + 28 bytes
       // Use random bits between 12 (min size) and 560 bytes (roughly 4500 bits)
       uint32_t packetSize = 560;
-      NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
-        << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
+      // NS_LOG_DEBUG("Flow " << i << " has random packet size between 12 and " << packetSize
+      //   << " bytes, expected bits/s = " << (packetSize + 28) * 8 * (i == illBehavedFlowNumber ? 60 : 20));
       sendHelper.SetAttribute ("PacketSize", UintegerValue (packetSize));
 
       // Install the source application on the correct host.
