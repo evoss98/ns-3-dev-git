@@ -218,7 +218,7 @@ print('Saving ' + delayFileName)
 
 print("processing delay data for different quantum values...")
 
-files = ["drr_25.xml", "drr_50.xml", "drr_100.xml", "drr_200.xml", "drr_500.xml", "drr_560.xml", "drr_1000.xml"]
+files = ["drr_25.xml", "drr_50.xml", "drr_100.xml", "drr_200.xml", "drr_500.xml", "drr_560.xml", "drr_1000.xml", "drr_5000.xml", "drr_10000.xml"]
 dictionary_data = processDelayFiles(files)
 
 delayWithQuantumFileName = os.path.join(args.dir, 'figures/flows_delay_quantum_values.png')
@@ -230,6 +230,8 @@ drr200delay = dictionary_data[files[3]]
 drr500delay = dictionary_data[files[4]]
 drr560delay = dictionary_data[files[5]]
 drr1000delay = dictionary_data[files[6]]
+drr5000delay = dictionary_data[files[7]]
+drr10000delay = dictionary_data[files[8]]
 
 plt.figure()
 plt.plot(drr25delay.keys(), drr25delay.values(), 'c2-', label='quantum=25')
@@ -239,6 +241,8 @@ plt.plot(drr200delay.keys(), drr200delay.values(), 'r^-', label='quantum=200')
 plt.plot(drr500delay.keys(), drr500delay.values(), 'yo-', label='quantum=500')
 plt.plot(drr560delay.keys(), drr560delay.values(), 'k>-', label='quantum=560')
 plt.plot(drr1000delay.keys(), drr1000delay.values(), 'mx-', label='quantum=1000')
+plt.plot(drr5000delay.keys(), drr5000delay.values(), 'r<-', label='quantum=5000')
+plt.plot(drr10000delay.keys(), drr10000delay.values(), 'bD-', label='quantum=10000')
 plt.legend(loc='upper right')
 plt.ylabel('Avg Delay Per Packet (ns)')
 plt.xlabel('Flow')
