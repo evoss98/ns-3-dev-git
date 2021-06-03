@@ -105,6 +105,11 @@ namespace ns3 {
                            UintegerValue (0),
                            MakeUintegerAccessor (&DrrQueueDisc::m_maxQueueSize),
                            MakeUintegerChecker<uint32_t> ())
+            .AddAttribute ("Flows",
+                           "The number of queues into which the incoming packets are classified",
+                           UintegerValue (1024),
+                           MakeUintegerAccessor (&DrrQueueDisc::m_flows),
+                           MakeUintegerChecker<uint32_t> ())
         ;
         return tid;
     }
@@ -141,7 +146,7 @@ namespace ns3 {
     DrrQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
         // Hash the IP 5-tuple to as identifier for the flow
-        uint32_t index = item->Hash ();
+        uint32_t index = item->Hash () % m_flows;
         NS_LOG_DEBUG ("Hash output " << index << " for packet item " << item);
 
         //check if index is in m_flowIndicies. If not, add to m_flowIndicies and create flow.

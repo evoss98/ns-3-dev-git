@@ -139,6 +139,7 @@ namespace ns3 {
         uint32_t DrrDrop (void);
 
         uint32_t m_quantum;            //!< Deficit assigned to flows at each round
+        uint32_t m_flows;              //!< the number of flows
         uint32_t m_maxQueueSize;       //!< Max size of the queue
         uint32_t m_currentQueueSize;   //!< Current size of the queue
 

@@ -228,9 +228,9 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500), "Flows", UintegerValue(500));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(100));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(500));
     } else {
       tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
@@ -344,9 +344,9 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500), "Flows", UintegerValue(1000));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(200));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(1000));
     } else {
       tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
@@ -473,9 +473,9 @@ main (int argc, char *argv[])
     // use the correct attribute name to set the size of the bottleneck queue.
     TrafficControlHelper tchPfifo;
     if (queueDisc == "drr") {
-      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500));
+      tchPfifo.SetRootQueueDisc ("ns3::DrrQueueDisc", "Quantum", UintegerValue (quantum), "MaxQueueSize", UintegerValue(500), "Flows", UintegerValue(1000));
     } else if (queueDisc == "sfq") {
-      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(200));
+      tchPfifo.SetRootQueueDisc ("ns3::SfqQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")), "Flows", UintegerValue(1000));
     } else {
       tchPfifo.SetRootQueueDisc ("ns3::FifoQueueDisc", "MaxSize", QueueSizeValue (QueueSize ("500p")));
     }
